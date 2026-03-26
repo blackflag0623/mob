@@ -1,0 +1,50 @@
+<script lang="ts">
+  import type { InstanceState } from '../lib/types.js';
+  export let state: InstanceState;
+
+  const labels: Record<InstanceState, string> = {
+    running: 'Running',
+    idle: 'Idle',
+    waiting: 'Waiting',
+    stopped: 'Stopped',
+    stale: 'Stale',
+  };
+</script>
+
+<span class="badge {state}">{labels[state] || state}</span>
+
+<style>
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .running { color: var(--green); background: rgba(63, 185, 80, 0.1); }
+  .running::before { background: var(--green); }
+
+  .idle { color: var(--accent); background: rgba(88, 166, 255, 0.1); }
+  .idle::before { background: var(--accent); }
+
+  .waiting { color: var(--yellow); background: rgba(210, 153, 34, 0.1); }
+  .waiting::before { background: var(--yellow); }
+
+  .stopped { color: var(--text-muted); background: rgba(72, 79, 88, 0.1); }
+  .stopped::before { background: var(--text-muted); }
+
+  .stale { color: var(--orange); background: rgba(209, 134, 22, 0.1); }
+  .stale::before { background: var(--orange); }
+</style>
