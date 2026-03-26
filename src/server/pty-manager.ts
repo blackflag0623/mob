@@ -32,6 +32,7 @@ export class PtyManager extends EventEmitter {
   spawn(instanceId: string, cwd: string, opts?: {
     model?: string;
     permissionMode?: string;
+    claudeSessionId?: string;
   }): IPty {
     const shell = getDefaultShell();
     const args = getShellArgs(shell);
@@ -74,6 +75,11 @@ export class PtyManager extends EventEmitter {
     // Build claude command
     setTimeout(() => {
       let cmd = 'claude';
+      if (opts?.claudeSessionId) {
+        cmd += ` --resume ${opts.claudeSessionId}`;
+      } else {
+        cmd += ` --name mob-${instanceId}`;
+      }
       if (opts?.model) cmd += ` --model ${opts.model}`;
       if (opts?.permissionMode) cmd += ` --permission-mode ${opts.permissionMode}`;
       log(`Sending command: ${cmd}`);

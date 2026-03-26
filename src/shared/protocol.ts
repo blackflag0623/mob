@@ -3,6 +3,8 @@ export type ClientMessage =
   | { type: 'sync' }
   | { type: 'launch'; payload: LaunchPayload }
   | { type: 'kill'; payload: { instanceId: string } }
+  | { type: 'resume'; payload: { instanceId: string } }
+  | { type: 'dismiss'; payload: { instanceId: string } }
   | { type: 'terminal:subscribe'; payload: { instanceId: string } }
   | { type: 'terminal:unsubscribe'; payload: { instanceId: string } }
   | { type: 'terminal:input'; payload: { instanceId: string; data: string } }
@@ -22,8 +24,10 @@ export type ServerMessage =
   | { type: 'instance:update'; payload: InstanceInfo }
   | { type: 'instance:remove'; payload: { instanceId: string } }
   | { type: 'terminal:output'; payload: { instanceId: string; data: string } }
+  | { type: 'terminal:scrollback'; payload: { instanceId: string; data: string } }
   | { type: 'terminal:exit'; payload: { instanceId: string; exitCode: number } }
-  | { type: 'error'; payload: { message: string; context?: string } };
+  | { type: 'error'; payload: { message: string; context?: string } }
+  | { type: 'instance:select'; payload: { instanceId: string } };
 
 export interface InstanceInfo {
   id: string;
@@ -39,6 +43,11 @@ export interface InstanceInfo {
   lastUpdated: number;
   model?: string;
   permissionMode?: string;
+  createdAt?: number;
+  stoppedAt?: number;
+  claudeSessionId?: string;
+  previousInstanceId?: string;
+  historical?: boolean;
 }
 
-export type InstanceState = 'running' | 'idle' | 'waiting' | 'stopped' | 'stale';
+export type InstanceState = 'launching' | 'running' | 'idle' | 'waiting' | 'stopped' | 'stale';

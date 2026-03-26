@@ -4,7 +4,9 @@ import { createWsServer } from './ws-server.js';
 import { InstanceManager } from './instance-manager.js';
 import { PtyManager } from './pty-manager.js';
 import { DiscoveryService } from './discovery.js';
-import { ensureDir, getMobDir, getInstancesDir } from './util/platform.js';
+import { SessionStore } from './session-store.js';
+import { ScrollbackBuffer } from './scrollback-buffer.js';
+import { ensureDir, getMobDir, getInstancesDir, getSessionsDir, getScrollbackDir } from './util/platform.js';
 import { DEFAULT_PORT } from '../shared/constants.js';
 
 const port = parseInt(process.env.MOB_PORT || '', 10) || DEFAULT_PORT;
@@ -12,10 +14,18 @@ const port = parseInt(process.env.MOB_PORT || '', 10) || DEFAULT_PORT;
 // Ensure directories exist
 ensureDir(getMobDir());
 ensureDir(getInstancesDir());
+ensureDir(getSessionsDir());
+ensureDir(getScrollbackDir());
 
 const ptyManager = new PtyManager();
 const discovery = new DiscoveryService();
-const instanceManager = new InstanceManager(ptyManager, discovery);
+const sessionStore = new SessionStore();
+const scrollbackBuffer = new ScrollbackBuffer();
+scrollbackBuffer.start();
+
+sessionStore.pruneExpired();
+
+const instanceManager = new InstanceManager(ptyManager, discovery, sessionStore, scrollbackBuffer);
 
 const app = createApp(instanceManager);
 const server = http.createServer(app);
@@ -30,15 +40,14 @@ server.listen(port, '0.0.0.0', () => {
 });
 
 // Graceful shutdown
-process.on('SIGINT', () => {
+function shutdown() {
   console.log('\nShutting down...');
+  instanceManager.saveAllAsStopped();
+  scrollbackBuffer.stop();
   instanceManager.stop();
   server.close();
   process.exit(0);
-});
+}
 
-process.on('SIGTERM', () => {
-  instanceManager.stop();
-  server.close();
-  process.exit(0);
-});
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

@@ -3,6 +3,7 @@
   export let state: InstanceState;
 
   const labels: Record<InstanceState, string> = {
+    launching: 'Starting',
     running: 'Running',
     idle: 'Idle',
     waiting: 'Waiting',
@@ -47,4 +48,15 @@
 
   .stale { color: var(--orange); background: rgba(209, 134, 22, 0.1); }
   .stale::before { background: var(--orange); }
+
+  .launching { color: var(--yellow); background: rgba(210, 153, 34, 0.1); }
+  .launching::before {
+    background: var(--yellow);
+    animation: pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
 </style>

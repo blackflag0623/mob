@@ -119,12 +119,42 @@ export function createWsServer(
           // Auto-subscribe the launching client
           const subs = instanceManager.subscribers.get(info.id);
           if (subs) subs.add(ws);
+          // Tell the launching client to select this instance
+          ws.send(JSON.stringify({
+            type: 'instance:select',
+            payload: { instanceId: info.id },
+          } satisfies ServerMessage));
           break;
         }
 
         case 'kill':
           log('info', `Client #${clientId} killing instance ${msg.payload.instanceId}`);
           instanceManager.kill(msg.payload.instanceId);
+          break;
+
+        case 'resume': {
+          log('info', `Client #${clientId} resuming instance ${msg.payload.instanceId}`);
+          const resumed = instanceManager.resume(msg.payload.instanceId);
+          if (resumed) {
+            log('info', `Resumed as new instance ${resumed.id}`);
+            const subs = instanceManager.subscribers.get(resumed.id);
+            if (subs) subs.add(ws);
+            ws.send(JSON.stringify({
+              type: 'instance:select',
+              payload: { instanceId: resumed.id },
+            } satisfies ServerMessage));
+          } else {
+            ws.send(JSON.stringify({
+              type: 'error',
+              payload: { message: 'Cannot resume instance', context: msg.payload.instanceId },
+            }));
+          }
+          break;
+        }
+
+        case 'dismiss':
+          log('info', `Client #${clientId} dismissing instance ${msg.payload.instanceId}`);
+          instanceManager.dismiss(msg.payload.instanceId);
           break;
 
         case 'terminal:subscribe': {
@@ -136,6 +166,15 @@ export function createWsServer(
             instanceManager.subscribers.set(instanceId, subs);
           }
           subs.add(ws);
+
+          // Send scrollback history
+          const scrollback = instanceManager.getScrollback(instanceId);
+          if (scrollback) {
+            ws.send(JSON.stringify({
+              type: 'terminal:scrollback',
+              payload: { instanceId, data: scrollback },
+            } satisfies ServerMessage));
+          }
           break;
         }
 

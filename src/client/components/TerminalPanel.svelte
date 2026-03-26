@@ -12,6 +12,7 @@
   let unsubMessage: (() => void) | null = null;
   let quickInput = '';
   let resizeObserver: ResizeObserver | null = null;
+  let inputDisposable: { dispose(): void } | null = null;
 
   // Cache terminals per instance
   const terminalCache = new Map<string, { terminal: Terminal; fitAddon: FitAddon }>();
@@ -56,6 +57,8 @@
     return cached;
   }
 
+  let isStopped = false;
+
   function attachTerminal(inst: InstanceInfo | null) {
     // Unsubscribe from previous
     if (currentSubscription) {
@@ -65,12 +68,20 @@
       }
       currentSubscription = null;
     }
+    // Dispose previous input listener to prevent duplicate keystrokes
+    if (inputDisposable) {
+      inputDisposable.dispose();
+      inputDisposable = null;
+    }
 
     if (!inst || !inst.managed || !terminalEl) {
       terminal = null;
       fitAddon = null;
+      isStopped = false;
       return;
     }
+
+    isStopped = inst.state === 'stopped';
 
     const cached = getOrCreateTerminal(inst.id);
     terminal = cached.terminal;
@@ -86,19 +97,23 @@
 
     fitAddon.fit();
 
-    // Subscribe to output
+    // Subscribe to output (also triggers scrollback for stopped instances)
     wsClient.send({ type: 'terminal:subscribe', payload: { instanceId: inst.id } });
     currentSubscription = inst.id;
 
-    // Send resize
-    wsClient.send({
-      type: 'terminal:resize',
-      payload: { instanceId: inst.id, cols: terminal.cols, rows: terminal.rows },
-    });
+    if (!isStopped) {
+      // Send resize
+      wsClient.send({
+        type: 'terminal:resize',
+        payload: { instanceId: inst.id, cols: terminal.cols, rows: terminal.rows },
+      });
+    }
 
-    // Forward input
-    terminal.onData((data) => {
-      wsClient.send({ type: 'terminal:input', payload: { instanceId: inst.id, data } });
+    // Forward input (only for active instances)
+    inputDisposable = terminal.onData((data) => {
+      if (!isStopped) {
+        wsClient.send({ type: 'terminal:input', payload: { instanceId: inst.id, data } });
+      }
     });
   }
 
@@ -114,6 +129,9 @@
   onMount(() => {
     unsubMessage = wsClient.onMessage((msg) => {
       if (msg.type === 'terminal:output' && msg.payload.instanceId === currentSubscription) {
+        terminal?.write(msg.payload.data);
+      }
+      if (msg.type === 'terminal:scrollback' && msg.payload.instanceId === currentSubscription) {
         terminal?.write(msg.payload.data);
       }
     });
@@ -146,15 +164,24 @@
 <div class="terminal-panel">
   {#if $selectedInstance}
     {#if $selectedInstance.managed}
-      <div class="quick-input">
-        <input
-          type="text"
-          bind:value={quickInput}
-          on:keydown={(e) => e.key === 'Enter' && handleQuickSend()}
-          placeholder="Quick send to Claude..."
-        />
-        <button on:click={handleQuickSend}>Send</button>
-      </div>
+      {#if $selectedInstance.state === 'stopped'}
+        <div class="stopped-banner">Session ended</div>
+      {:else if $selectedInstance.state === 'launching'}
+        <div class="launching-banner">
+          <span class="spinner"></span>
+          Starting Claude...
+        </div>
+      {:else}
+        <div class="quick-input">
+          <input
+            type="text"
+            bind:value={quickInput}
+            on:keydown={(e) => e.key === 'Enter' && handleQuickSend()}
+            placeholder="Quick send to Claude..."
+          />
+          <button on:click={handleQuickSend}>Send</button>
+        </div>
+      {/if}
       <div class="terminal-container" bind:this={terminalEl}></div>
     {:else}
       <div class="external-info">
@@ -219,6 +246,43 @@
 
   .quick-input button:hover {
     background: var(--accent-hover);
+  }
+
+  .stopped-banner {
+    padding: 6px 12px;
+    background: rgba(139, 148, 158, 0.15);
+    border-bottom: 1px solid var(--border);
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: center;
+    font-weight: 600;
+  }
+
+  .launching-banner {
+    padding: 6px 12px;
+    background: rgba(210, 153, 34, 0.1);
+    border-bottom: 1px solid var(--border);
+    color: var(--yellow);
+    font-size: 12px;
+    text-align: center;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(210, 153, 34, 0.3);
+    border-top-color: var(--yellow);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
   }
 
   .terminal-container {

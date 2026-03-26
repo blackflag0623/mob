@@ -19,10 +19,20 @@
     }
   }
 
+  function resume(e: Event) {
+    e.stopPropagation();
+    wsClient.send({ type: 'resume', payload: { instanceId: instance.id } });
+  }
+
+  function dismiss(e: Event) {
+    e.stopPropagation();
+    wsClient.send({ type: 'dismiss', payload: { instanceId: instance.id } });
+  }
+
   function shortPath(p: string): string {
     const home = '~';
-    // Simple home dir replacement
-    return p.replace(/^\/root/, home).replace(/^\/home\/\w+/, home);
+    // Simple home dir replacement (Linux + macOS)
+    return p.replace(/^\/root/, home).replace(/^\/home\/\w+/, home).replace(/^\/Users\/\w+/, home);
   }
 </script>
 
@@ -57,9 +67,14 @@
 
   <div class="card-footer">
     <span class="badge-type">{instance.managed ? 'managed' : 'external'}</span>
-    {#if instance.managed && instance.state !== 'stopped'}
-      <button class="kill-btn" on:click={kill} title="Kill instance">✕</button>
-    {/if}
+    <div class="card-actions">
+      {#if instance.managed && instance.state === 'stopped'}
+        <button class="resume-btn" on:click={resume} title="Resume session">Resume</button>
+        <button class="dismiss-btn" on:click={dismiss} title="Dismiss">✕</button>
+      {:else if instance.managed && instance.state !== 'stopped'}
+        <button class="kill-btn" on:click={kill} title="Kill instance">✕</button>
+      {/if}
+    </div>
   </div>
 </div>
 
@@ -170,5 +185,43 @@
   .kill-btn:hover {
     background: rgba(248, 81, 73, 0.2);
     color: var(--red);
+  }
+
+  .card-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .resume-btn {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    background: transparent;
+    font-weight: 600;
+    transition: all 0.15s;
+  }
+
+  .resume-btn:hover {
+    background: rgba(88, 166, 255, 0.15);
+  }
+
+  .dismiss-btn {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--text-muted);
+    transition: all 0.15s;
+  }
+
+  .dismiss-btn:hover {
+    background: rgba(139, 148, 158, 0.2);
+    color: var(--text-secondary);
   }
 </style>

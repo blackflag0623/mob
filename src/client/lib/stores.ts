@@ -16,7 +16,7 @@ export const selectedInstance = derived(
 export const sortedInstances = derived(instances, ($instances) => {
   return Array.from($instances.values()).sort((a, b) => {
     // Active instances first
-    const stateOrder: Record<string, number> = { running: 0, waiting: 1, idle: 2, stale: 3, stopped: 4 };
+    const stateOrder: Record<string, number> = { launching: 0, running: 1, waiting: 2, idle: 3, stale: 4, stopped: 5 };
     const aOrder = stateOrder[a.state] ?? 5;
     const bOrder = stateOrder[b.state] ?? 5;
     if (aOrder !== bOrder) return aOrder - bOrder;
@@ -49,7 +49,12 @@ wsClient.onMessage((msg) => {
         id === msg.payload.instanceId ? null : id
       );
       break;
+    case 'instance:select':
+      selectedInstanceId.set(msg.payload.instanceId);
+      break;
   }
+
+  // terminal:scrollback and terminal:output are handled by TerminalPanel via onMessage
 });
 
 // Connect on load

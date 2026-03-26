@@ -99,6 +99,10 @@
     showSuggestions = false;
   }
 
+  function autofocus(node: HTMLElement) {
+    node.focus();
+  }
+
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Escape') cancel();
     if (e.key === 'Enter' && e.ctrlKey) launch();
@@ -126,6 +130,7 @@
           on:blur={() => { setTimeout(() => showSuggestions = false, 200); }}
           placeholder="~/Development/my-project"
           autocomplete="off"
+          use:autofocus
         />
         {#if showSuggestions}
           <ul class="suggestions">

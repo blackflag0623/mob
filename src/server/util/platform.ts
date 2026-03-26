@@ -1,6 +1,7 @@
 import os from 'os';
 import path from 'path';
 import fs from 'fs';
+import { execFileSync } from 'child_process';
 
 export function getDefaultShell(): string {
   if (process.platform === 'win32') {
@@ -26,4 +27,29 @@ export function getMobDir(): string {
 
 export function getInstancesDir(): string {
   return path.join(getMobDir(), 'instances');
+}
+
+export function getSessionsDir(): string {
+  return path.join(getMobDir(), 'sessions');
+}
+
+export function getScrollbackDir(): string {
+  return path.join(getMobDir(), 'scrollback');
+}
+
+export function getGitBranch(cwd: string): string | undefined {
+  try {
+    let resolved = cwd;
+    if (resolved.startsWith('~/') || resolved === '~') {
+      resolved = os.homedir() + resolved.slice(1);
+    }
+    return execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], {
+      cwd: resolved,
+      encoding: 'utf-8',
+      timeout: 3000,
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim() || undefined;
+  } catch {
+    return undefined;
+  }
 }
