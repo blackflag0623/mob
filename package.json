@@ -1,8 +1,20 @@
 {
-  "name": "mob",
+  "name": "mob-dashboard",
   "version": "0.2.0",
-  "private": true,
+  "description": "Local web dashboard for coordinating multiple Claude Code CLI sessions",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nickelbob/mob.git"
+  },
+  "keywords": ["claude", "claude-code", "ai", "terminal", "dashboard", "cli"],
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "mob": "./bin/mob.js"
+  },
   "scripts": {
     "dev": "concurrently \"tsx src/server/index.ts\" \"vite\"",
     "build": "vite build && tsc -p tsconfig.node.json",
@@ -16,8 +28,17 @@
     "format:check": "prettier --check 'src/**/*.{ts,svelte}'",
     "setup": "node scripts/postinstall.cjs",
     "predev": "node scripts/postinstall.cjs",
-    "prebuild": "node scripts/postinstall.cjs"
+    "prebuild": "node scripts/postinstall.cjs",
+    "postinstall": "node scripts/postinstall.cjs",
+    "prepublishOnly": "npm run build"
   },
+  "files": [
+    "bin/",
+    "dist/",
+    "scripts/postinstall.cjs",
+    "package.json",
+    "README.md"
+  ],
   "dependencies": {
     "@lydell/node-pty": "^1.0.0",
     "chokidar": "^4.0.0",
