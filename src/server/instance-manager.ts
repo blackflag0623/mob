@@ -10,6 +10,11 @@ import { STALE_THRESHOLD_MS } from '../shared/constants.js';
 import { getGitBranch } from './util/platform.js';
 
 export class InstanceManager extends EventEmitter {
+  private log(...args: unknown[]) {
+    const ts = new Date().toISOString().slice(11, 23);
+    console.log(`[${ts}] [instance-mgr]`, ...args);
+  }
+
   private instances = new Map<string, InstanceInfo>();
   private managedIds = new Set<string>();
   private autoNameIds = new Set<string>();
@@ -58,26 +63,9 @@ export class InstanceManager extends EventEmitter {
   }
 
   private setupListeners(): void {
-    this.discovery.on('update', (status: InstanceStatusFile, filePath: string) => {
-      const existing = this.instances.get(status.id);
-      const info: InstanceInfo = {
-        id: status.id,
-        name: existing?.name || status.id,
-        managed: this.managedIds.has(status.id),
-        cwd: status.cwd,
-        gitBranch: status.gitBranch,
-        state: status.state,
-        ticket: status.ticket,
-        subtask: status.subtask,
-        progress: status.progress,
-        currentTool: status.currentTool,
-        lastUpdated: status.lastUpdated,
-        model: status.model || existing?.model,
-        createdAt: existing?.createdAt,
-        claudeSessionId: existing?.claudeSessionId,
-      };
-      this.instances.set(status.id, info);
-      this.emit('update', info);
+    this.discovery.on('update', (status: InstanceStatusFile) => {
+      this.log(`discovery update: id=${status.id} state=${status.state} topic=${status.topic || '(none)'}`);
+      this.handleHookUpdate(status);
     });
 
     this.discovery.on('remove', (id: string) => {

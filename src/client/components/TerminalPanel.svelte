@@ -11,6 +11,7 @@
   let currentSubscription: string | null = null;
   let unsubMessage: (() => void) | null = null;
   let resizeObserver: ResizeObserver | null = null;
+  let resizeHandler: (() => void) | null = null;
   let inputDisposable: { dispose(): void } | null = null;
 
   // Cache terminals per instance
@@ -161,11 +162,26 @@
       }
     });
     if (terminalEl) resizeObserver.observe(terminalEl);
+
+    // Re-fit terminal when window moves between displays with different DPI
+    resizeHandler = () => {
+      if (fitAddon && terminal) {
+        fitAddon.fit();
+        if (currentSubscription) {
+          wsClient.send({
+            type: 'terminal:resize',
+            payload: { instanceId: currentSubscription, cols: terminal.cols, rows: terminal.rows },
+          });
+        }
+      }
+    };
+    window.addEventListener('resize', resizeHandler);
   });
 
   onDestroy(() => {
     unsubMessage?.();
     resizeObserver?.disconnect();
+    if (resizeHandler) window.removeEventListener('resize', resizeHandler);
     if (currentSubscription) {
       wsClient.send({ type: 'terminal:unsubscribe', payload: { instanceId: currentSubscription } });
     }

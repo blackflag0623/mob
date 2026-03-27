@@ -11,6 +11,11 @@ MOB_PORT="${MOB_PORT:-4040}"
 
 mkdir -p "$INSTANCES_DIR"
 
+# Only report for mob-launched instances
+if [ -z "${MOB_INSTANCE_ID:-}" ]; then
+  exit 0
+fi
+
 # Read JSON from stdin
 INPUT=$(cat)
 
@@ -35,7 +40,8 @@ if command -v git &>/dev/null && [ -d "$CWD/.git" ] || git -C "$CWD" rev-parse -
 fi
 
 # Determine state from hook event type
-HOOK_EVENT=$(echo "$INPUT" | jq -r '.event // empty' 2>/dev/null || echo "")
+# Claude Code uses hook_event_name, fall back to event for compatibility
+HOOK_EVENT=$(echo "$INPUT" | jq -r '.hook_event_name // .event // empty' 2>/dev/null || echo "")
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || echo "")
 
 case "$HOOK_EVENT" in
@@ -52,7 +58,7 @@ esac
 # Extract user prompt from UserPromptSubmit for auto-naming
 TOPIC=""
 if [ "$HOOK_EVENT" = "UserPromptSubmit" ]; then
-  RAW_MSG=$(echo "$INPUT" | jq -r '.message // empty' 2>/dev/null || echo "")
+  RAW_MSG=$(echo "$INPUT" | jq -r '.prompt // .message // empty' 2>/dev/null || echo "")
   if [ -n "$RAW_MSG" ]; then
     # Truncate to first 80 chars, first line only
     TOPIC=$(echo "$RAW_MSG" | head -1 | cut -c1-80)

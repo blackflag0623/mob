@@ -18,7 +18,8 @@ const HOOK_EVENTS = [
 
 function getHookCommand(): string {
   if (process.platform === 'win32') {
-    return `powershell -ExecutionPolicy Bypass -File "${HOOK_SCRIPT_WIN}"`;
+    const psPath = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+    return `"${psPath}" -NoProfile -ExecutionPolicy Bypass -File "${HOOK_SCRIPT_WIN}"`;
   }
   return `bash "${HOOK_SCRIPT}"`;
 }

@@ -119,6 +119,7 @@ export function createApp(instanceManager: InstanceManager): express.Application
       res.status(400).json({ error: 'Missing instance id' });
       return;
     }
+    log(`hook update: id=${data.id} state=${data.state} topic=${data.topic || '(none)'}`);
     data.lastUpdated = data.lastUpdated || Date.now();
     instanceManager.handleHookUpdate(data);
     res.json({ ok: true });

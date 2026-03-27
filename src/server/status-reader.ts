@@ -20,6 +20,7 @@ export function readStatusFile(filePath: string): InstanceStatusFile | null {
       lastUpdated: data.lastUpdated,
       sessionId: data.sessionId || undefined,
       model: data.model || undefined,
+      topic: data.topic || undefined,
     };
   } catch {
     return null;

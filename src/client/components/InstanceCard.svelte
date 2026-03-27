@@ -74,6 +74,8 @@
         <button class="dismiss-btn" on:click={dismiss} title="Dismiss">✕</button>
       {:else if instance.managed && instance.state !== 'stopped'}
         <button class="kill-btn" on:click={kill} title="Kill instance">✕</button>
+      {:else if !instance.managed}
+        <button class="dismiss-btn" on:click={dismiss} title="Dismiss">✕</button>
       {/if}
     </div>
   </div>

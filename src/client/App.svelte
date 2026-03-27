@@ -25,6 +25,14 @@
     });
   }
 
+  function handleMousedown(e: MouseEvent) {
+    const tag = (e.target as HTMLElement)?.tagName;
+    // Don't steal focus from interactive elements or the launch dialog
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+    if ((e.target as HTMLElement)?.closest('.overlay')) return;
+    refocusTerminal();
+  }
+
   function handleKeydown(e: KeyboardEvent) {
     const mod = isMac ? e.metaKey : e.ctrlKey;
     if (e.altKey && e.key === 'n') {
@@ -55,7 +63,7 @@
   }
 </script>
 
-<svelte:window on:keydown={handleKeydown} />
+<svelte:window on:keydown={handleKeydown} on:mousedown={handleMousedown} />
 
 <main>
   <header>

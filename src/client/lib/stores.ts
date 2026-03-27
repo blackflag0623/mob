@@ -15,12 +15,11 @@ export const selectedInstance = derived(
 
 export const sortedInstances = derived(instances, ($instances) => {
   return Array.from($instances.values()).sort((a, b) => {
-    // Active instances first
-    const stateOrder: Record<string, number> = { launching: 0, running: 1, waiting: 2, idle: 3, stale: 4, stopped: 5 };
-    const aOrder = stateOrder[a.state] ?? 5;
-    const bOrder = stateOrder[b.state] ?? 5;
-    if (aOrder !== bOrder) return aOrder - bOrder;
-    return b.lastUpdated - a.lastUpdated;
+    // Stable sort: by creation time (oldest first), stopped instances last
+    const aStop = a.state === 'stopped' ? 1 : 0;
+    const bStop = b.state === 'stopped' ? 1 : 0;
+    if (aStop !== bStop) return aStop - bStop;
+    return (a.createdAt ?? 0) - (b.createdAt ?? 0);
   });
 });
 
