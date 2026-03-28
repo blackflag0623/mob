@@ -35,6 +35,7 @@
   "files": [
     "bin/",
     "dist/",
+    "hooks/",
     "scripts/postinstall.cjs",
     "package.json",
     "README.md"

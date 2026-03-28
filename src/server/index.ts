@@ -9,6 +9,7 @@ import { ScrollbackBuffer } from './scrollback-buffer.js';
 import { SettingsManager } from './settings-manager.js';
 import { ensureDir, getMobDir, getInstancesDir, getSessionsDir, getScrollbackDir } from './util/platform.js';
 import { DEFAULT_PORT } from '../shared/constants.js';
+import { installHooks } from './hooks.js';
 
 const port = parseInt(process.env.MOB_PORT || '', 10) || DEFAULT_PORT;
 const host = process.env.MOB_HOST || '127.0.0.1';
@@ -18,6 +19,10 @@ ensureDir(getMobDir());
 ensureDir(getInstancesDir());
 ensureDir(getSessionsDir());
 ensureDir(getScrollbackDir());
+
+// Auto-install Claude Code hooks so external instances are discovered
+const packageRoot = new URL('../../..', import.meta.url).pathname;
+installHooks(packageRoot, true);
 
 const settingsManager = new SettingsManager();
 const ptyManager = new PtyManager();
