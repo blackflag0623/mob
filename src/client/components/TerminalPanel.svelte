@@ -13,6 +13,7 @@
   let resizeObserver: ResizeObserver | null = null;
   let resizeHandler: (() => void) | null = null;
   let inputDisposable: { dispose(): void } | null = null;
+  let scrollDisposable: { dispose(): void } | null = null;
   let unsubRemove: (() => void) | null = null;
   let prevConnected = false;
 
@@ -20,6 +21,20 @@
 
   // Cache terminals per instance (with LRU cap)
   const terminalCache = new Map<string, { terminal: Terminal; fitAddon: FitAddon }>();
+
+  // Track whether the active terminal is scrolled to bottom (default true)
+  let isAtBottom = true;
+
+  function checkIfAtBottom(t: Terminal): boolean {
+    const buf = t.buffer.active;
+    return buf.viewportY >= buf.baseY;
+  }
+
+  function scrollToBottomIfNeeded() {
+    if (terminal && isAtBottom) {
+      terminal.scrollToBottom();
+    }
+  }
 
   function evictOldestTerminal() {
     const max = get(settings).general.maxCachedTerminals;
@@ -102,6 +117,10 @@
       inputDisposable.dispose();
       inputDisposable = null;
     }
+    if (scrollDisposable) {
+      scrollDisposable.dispose();
+      scrollDisposable = null;
+    }
 
     if (!inst || !inst.managed || !terminalEl) {
       terminal = null;
@@ -165,21 +184,32 @@
         wsClient.send({ type: 'terminal:input', payload: { instanceId: inst.id, data } });
       }
     });
+
+    // Track scroll position to know if user scrolled up
+    isAtBottom = true;
+    scrollDisposable = terminal.onScroll(() => {
+      if (terminal) {
+        isAtBottom = checkIfAtBottom(terminal);
+      }
+    });
   }
 
   onMount(() => {
     unsubMessage = wsClient.onMessage((msg) => {
       if (msg.type === 'terminal:output' && msg.payload.instanceId === currentSubscription) {
         terminal?.write(msg.payload.data);
+        scrollToBottomIfNeeded();
       }
       if (msg.type === 'terminal:scrollback' && msg.payload.instanceId === currentSubscription) {
         terminal?.write(msg.payload.data);
+        scrollToBottomIfNeeded();
       }
     });
 
     resizeObserver = new ResizeObserver(() => {
       if (fitAddon && terminal) {
         fitAddon.fit();
+        scrollToBottomIfNeeded();
         if (currentSubscription) {
           wsClient.send({
             type: 'terminal:resize',
@@ -199,6 +229,7 @@
     resizeHandler = () => {
       if (fitAddon && terminal) {
         fitAddon.fit();
+        scrollToBottomIfNeeded();
         if (currentSubscription) {
           wsClient.send({
             type: 'terminal:resize',
@@ -213,6 +244,7 @@
   onDestroy(() => {
     unsubMessage?.();
     unsubRemove?.();
+    scrollDisposable?.dispose();
     resizeObserver?.disconnect();
     if (resizeHandler) window.removeEventListener('resize', resizeHandler);
     if (currentSubscription) {
@@ -242,6 +274,7 @@
         cached.fitAddon.fit();
       }
     }
+    scrollToBottomIfNeeded();
   }
 
   // Re-subscribe terminal on WebSocket reconnect

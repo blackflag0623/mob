@@ -1,7 +1,8 @@
 <script lang="ts">
   import InstanceList from './InstanceList.svelte';
   import TerminalPanel from './TerminalPanel.svelte';
-  import { selectedInstance, selectedInstanceId, sidebarCollapsed } from '../lib/stores.js';
+  import { selectedInstance, selectedInstanceId, sidebarCollapsed, sortedInstances } from '../lib/stores.js';
+  import type { InstanceState } from '../../shared/protocol.js';
 
   let toast: { name: string; branch?: string; cwd: string } | null = null;
   let toastKey = 0;
@@ -30,6 +31,18 @@
     <div class="sidebar-content">
       <InstanceList />
     </div>
+    {#if $sidebarCollapsed && $sortedInstances.length > 0}
+      <div class="mini-instances">
+        {#each $sortedInstances as inst (inst.id)}
+          <button
+            class="mini-square {inst.state}"
+            class:selected={$selectedInstanceId === inst.id}
+            on:click|stopPropagation={() => selectedInstanceId.set(inst.id)}
+            title={inst.name}
+          ></button>
+        {/each}
+      </div>
+    {/if}
     <button class="collapse-toggle" on:click={() => sidebarCollapsed.update(v => !v)} title={$sidebarCollapsed ? 'Expand sidebar (Alt+B)' : 'Collapse sidebar (Alt+B)'}>
       <span class="collapse-icon">{$sidebarCollapsed ? '›' : '‹'}</span>
     </button>
@@ -70,8 +83,9 @@
   }
 
   .sidebar.collapsed {
-    width: 28px;
-    min-width: 28px;
+    width: 36px;
+    min-width: 36px;
+    flex-direction: column;
   }
 
   .sidebar-content {
@@ -86,8 +100,8 @@
   }
 
   .collapse-toggle {
-    width: 28px;
-    min-width: 28px;
+    width: 36px;
+    min-width: 36px;
     border: none;
     background: transparent;
     color: var(--text-muted);
@@ -107,6 +121,60 @@
 
   .collapse-icon {
     line-height: 1;
+  }
+
+  .mini-instances {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 0;
+    overflow-y: auto;
+    flex: 1;
+    align-items: center;
+  }
+
+  .mini-square {
+    width: 20px;
+    height: 20px;
+    min-height: 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    background: var(--text-muted);
+    transition: filter 0.15s;
+  }
+
+  .mini-square:hover {
+    filter: brightness(1.3);
+  }
+
+  .mini-square.selected {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .mini-square.running {
+    background: var(--green);
+  }
+
+  .mini-square.idle {
+    background: var(--accent);
+  }
+
+  .mini-square.waiting,
+  .mini-square.launching {
+    background: var(--yellow);
+    animation: pulse-square 1.5s ease-in-out infinite;
+  }
+
+  .mini-square.stopped {
+    background: var(--text-muted);
+  }
+
+  @keyframes pulse-square {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
   }
 
   .main-area {
