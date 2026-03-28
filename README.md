@@ -27,47 +27,39 @@ A local web dashboard for coordinating multiple Claude Code CLI sessions. Launch
 ## Quick Start
 
 ```bash
-git clone https://github.com/nickelbob/mob.git
-cd mob
-npm install
+npm install -g mob-coordinator
+mob
 ```
 
-If you see errors about missing native modules, run:
-
-```bash
-npm run setup
-```
-
-This detects your platform and installs the correct native binaries for node-pty and rollup. It also runs automatically before `npm run dev` and `npm run build`.
+Open `http://localhost:4040` in your browser.
 
 ### Install Claude Code Hooks
 
-To enable status reporting (state, branch, auto-naming) from Claude instances launched by mob:
+To enable status reporting (state, branch, auto-naming) from Claude instances, clone the repo and run the hook installer:
 
 ```bash
+git clone https://github.com/nickelbob/mob.git
+cd mob
+npm install
 npm run install-hooks
 ```
 
-This adds hook entries to `~/.claude/settings.json` that report instance status back to the dashboard.
+This adds hook entries to `~/.claude/settings.json` that point to the hook scripts in the cloned repo. You only need to do this once — the hooks work regardless of whether you run mob via npm or from source.
 
-### Run
+### Development
 
-**Development** (hot-reload):
+To contribute or run from source:
 
 ```bash
+git clone https://github.com/nickelbob/mob.git
+cd mob
+npm install
 npm run dev
 ```
 
 Opens the backend on `http://localhost:4040` and the Vite dev server on `http://localhost:4041`. Use port 4041 during development.
 
-**Production**:
-
-```bash
-npm run build
-npm start
-```
-
-Everything is served from `http://localhost:4040`.
+If you see errors about missing native modules, run `npm run setup` to auto-detect and install the correct platform-specific binaries.
 
 ## Usage
 
@@ -145,6 +137,8 @@ See `CLAUDE.md` for detailed architecture documentation.
 
 ## Uninstalling Hooks
 
+From the cloned repo:
+
 ```bash
 npm run uninstall-hooks
 ```
@@ -181,6 +175,11 @@ MOB_PORT=4050 npm run dev
 If hooks aren't firing (crash, subtask weirdness), the terminal state fallback should correct the state within ~15 seconds. If an instance shows as running but the PTY process is dead, it will be marked stopped automatically on the next stale check cycle.
 
 ## Changelog
+
+### 0.2.1
+
+- Fix false "Needs Input" showing when Claude finishes a task (completion notifications no longer trigger waiting state)
+- npm package available: `npm install -g mob-coordinator`
 
 ### 0.2.0
 
