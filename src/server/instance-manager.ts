@@ -17,7 +17,7 @@ const logger = createLogger('instance-mgr');
 
 const JIRA_KEY_RE = /([A-Z][A-Z0-9]+-\d+)/;
 
-function extractJiraKey(branch: string | undefined): string | null {
+export function extractJiraKey(branch: string | undefined): string | null {
   if (!branch) return null;
   const m = branch.match(JIRA_KEY_RE);
   return m ? m[1] : null;
