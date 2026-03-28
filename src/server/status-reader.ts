@@ -22,6 +22,7 @@ export function readStatusFile(filePath: string): InstanceStatusFile | null {
       sessionId: data.sessionId || undefined,
       model: data.model || undefined,
       topic: data.topic || undefined,
+      hookEvent: data.hookEvent || undefined,
     };
   } catch {
     return null;

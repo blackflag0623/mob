@@ -319,6 +319,17 @@ export class InstanceManager extends EventEmitter {
   }
 
   handleHookUpdate(data: InstanceStatusFile): void {
+    const existing = this.instances.get(data.id);
+
+    // Completion notification: Notification immediately after Stop = "task done", not permission prompt.
+    // Clear hookEvent so lastHookEvent stays 'Stop' — both POST and file-watcher deliver
+    // each event, so the duplicate must also be suppressed.
+    if (data.hookEvent === 'Notification' && existing?.lastHookEvent === 'Stop') {
+      this.log.info(`suppressing waiting state for ${data.id} — Notification after Stop (task completion, not permission prompt)`);
+      data.state = 'idle';
+      data.hookEvent = undefined;
+    }
+
     if (data.state === 'stopped') {
       this.log.info(`hook update with stopped state: id=${data.id} managed=${this.managedIds.has(data.id)} ptyAlive=${this.ptyManager.has(data.id)}`);
       // Ignore stopped state from hooks if the PTY is still alive — this happens when
@@ -328,7 +339,6 @@ export class InstanceManager extends EventEmitter {
         return;
       }
     }
-    const existing = this.instances.get(data.id);
     // Auto-name: use topic or subtask, refreshing every 5 prompts
     let name = existing?.name || data.id;
     if (this.autoNameIds.has(data.id)) {
@@ -369,6 +379,7 @@ export class InstanceManager extends EventEmitter {
       claudeSessionId,
     };
     info.lastHookUpdate = Date.now();
+    info.lastHookEvent = data.hookEvent || existing?.lastHookEvent;
     this.applyTicketFields(info, data.ticket, data.ticketStatus);
     this.instances.set(data.id, info);
     this.emit('update', info);

@@ -63,7 +63,7 @@ try { $GitBranch = git -C "$Cwd" branch --show-current 2>$null } catch {}
 $State = switch ($HookEvent) {
     "SessionStart" { "running" }
     "SessionEnd"   { "stopped" }
-    "Stop"         { "stopped" }
+    "Stop"         { "idle" }
     "PreToolUse"   { "running" }
     "PostToolUse"  { "running" }
     "Notification" { "waiting" }
@@ -104,6 +104,7 @@ $Status = @{
     cwd = "$Cwd"
     gitBranch = "$GitBranch"
     state = "$State"
+    hookEvent = "$HookEvent"
     ticket = "$Ticket"
     ticketStatus = "$TicketStatus"
     subtask = "$Subtask"

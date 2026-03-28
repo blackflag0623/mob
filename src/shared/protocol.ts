@@ -51,6 +51,7 @@ export interface InstanceInfo {
   previousInstanceId?: string;
   historical?: boolean;
   lastHookUpdate?: number;
+  lastHookEvent?: string;
 }
 
 export type InstanceState = 'launching' | 'running' | 'idle' | 'waiting' | 'stopped';

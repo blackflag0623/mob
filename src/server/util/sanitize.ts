@@ -151,6 +151,7 @@ export function validateHookPayload(data: unknown): { valid: true; data: Record<
   if (typeof d.topic === 'string') d.topic = stripControlChars(d.topic).slice(0, 500);
   if (typeof d.ticket === 'string') d.ticket = stripControlChars(d.ticket).slice(0, 200);
   if (typeof d.ticketStatus === 'string') d.ticketStatus = stripControlChars(d.ticketStatus).slice(0, 100);
+  if (typeof d.hookEvent === 'string') d.hookEvent = stripControlChars(d.hookEvent).slice(0, 50);
 
   return { valid: true, data: d };
 }

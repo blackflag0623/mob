@@ -26,6 +26,7 @@ export interface InstanceStatusFile {
   lastUpdated: number;
   sessionId?: string;
   model?: string;
+  hookEvent?: string;
 }
 
 export interface HookPayload {

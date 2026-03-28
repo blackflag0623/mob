@@ -47,7 +47,7 @@ TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty' 2>/dev/null || echo "")
 case "$HOOK_EVENT" in
   "SessionStart") STATE="running" ;;
   "SessionEnd")   STATE="stopped" ;;
-  "Stop")         STATE="stopped" ;;
+  "Stop")         STATE="idle" ;;
   "PreToolUse")   STATE="running" ;;
   "PostToolUse")  STATE="running" ;;
   "Notification") STATE="waiting" ;;
@@ -89,6 +89,7 @@ STATUS_JSON=$(cat <<ENDJSON
   "cwd": "$CWD",
   "gitBranch": "$GIT_BRANCH",
   "state": "$STATE",
+  "hookEvent": "$HOOK_EVENT",
   "ticket": "$TICKET",
   "ticketStatus": "$TICKET_STATUS",
   "subtask": "$SUBTASK",
