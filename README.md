@@ -59,7 +59,7 @@ If you see errors about missing native modules, run `npm run setup` to auto-dete
 
 ### Launching Instances
 
-1. Click **+ Launch Instance** (or press **Alt+N**)
+1. Click **+ Launch Instance** (or press **Alt/Option+N**)
 2. Type or paste a working directory path (autocomplete suggests as you type)
 3. Optionally set a name, model, and permission mode
 4. Click **Launch** (or press **Ctrl+Enter**)
@@ -72,11 +72,14 @@ All shortcuts are rebindable in **Settings > Shortcuts**.
 
 | Default Shortcut | Action |
 |---|---|
-| **Alt+N** | Open launch dialog |
-| **Alt+B** | Toggle sidebar |
-| **Alt+Up/Down** | Cycle through sessions |
-| **Alt+R** | Resume selected instance |
-| **Ctrl/Cmd+1-9** | Jump to session by position |
+| **Alt/Option+N** | Open launch dialog |
+| **Alt/Option+B** | Toggle sidebar |
+| **Alt/Option+Up/Down** | Cycle through sessions |
+| **Alt/Option+R** | Resume selected instance |
+| **Alt/Option+W** | Kill selected instance |
+| **Alt/Option+X** | Dismiss selected instance |
+| **Alt/Option+,** | Open settings |
+| **Alt/Option+1-9** | Jump to session by position |
 | **Ctrl+C** | Copy selected text (or send interrupt if no selection) |
 | **Ctrl+V** | Paste from clipboard into terminal |
 | **Ctrl+Enter** | Launch instance (in launch dialog) |

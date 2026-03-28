@@ -33,6 +33,9 @@
     jumpToInstance8: 'Jump to Instance 8',
     jumpToInstance9: 'Jump to Instance 9',
     resumeInstance: 'Resume Selected Instance',
+    killInstance: 'Kill Selected Instance',
+    dismissInstance: 'Dismiss Selected Instance',
+    openSettings: 'Open Settings',
   };
 
   function startCapture(key: string) {

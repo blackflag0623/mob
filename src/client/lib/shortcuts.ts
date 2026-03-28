@@ -72,6 +72,7 @@ const CODE_DISPLAY: Record<string, string> = {
 export function formatShortcut(str: string, isMac: boolean): string {
   return str
     .replace(/Mod\+/g, isMac ? 'Cmd+' : 'Ctrl+')
+    .replace(/Alt\+/g, isMac ? 'Option+' : 'Alt+')
     .replace(/Key([A-Z])/g, '$1')
     .replace(/Digit(\d)/g, '$1')
     .replace(/Arrow(Up|Down|Left|Right)/g, (_m, dir) => CODE_DISPLAY[`Arrow${dir}`] || dir);

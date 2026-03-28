@@ -14,6 +14,9 @@ export interface Settings {
     jumpToInstance8: string;
     jumpToInstance9: string;
     resumeInstance: string;
+    killInstance: string;
+    dismissInstance: string;
+    openSettings: string;
   };
   launch: {
     cwd: string;
@@ -45,16 +48,19 @@ export const DEFAULT_SETTINGS: Settings = {
     toggleSidebar: 'Alt+KeyB',
     cycleInstanceDown: 'Alt+ArrowDown',
     cycleInstanceUp: 'Alt+ArrowUp',
-    jumpToInstance1: 'Mod+Digit1',
-    jumpToInstance2: 'Mod+Digit2',
-    jumpToInstance3: 'Mod+Digit3',
-    jumpToInstance4: 'Mod+Digit4',
-    jumpToInstance5: 'Mod+Digit5',
-    jumpToInstance6: 'Mod+Digit6',
-    jumpToInstance7: 'Mod+Digit7',
-    jumpToInstance8: 'Mod+Digit8',
-    jumpToInstance9: 'Mod+Digit9',
+    jumpToInstance1: 'Alt+Digit1',
+    jumpToInstance2: 'Alt+Digit2',
+    jumpToInstance3: 'Alt+Digit3',
+    jumpToInstance4: 'Alt+Digit4',
+    jumpToInstance5: 'Alt+Digit5',
+    jumpToInstance6: 'Alt+Digit6',
+    jumpToInstance7: 'Alt+Digit7',
+    jumpToInstance8: 'Alt+Digit8',
+    jumpToInstance9: 'Alt+Digit9',
     resumeInstance: 'Alt+KeyR',
+    killInstance: 'Alt+KeyW',
+    dismissInstance: 'Alt+KeyX',
+    openSettings: 'Alt+Comma',
   },
   launch: {
     cwd: '',

@@ -142,10 +142,8 @@
 
     // Handle keyboard shortcuts
     terminal.attachCustomKeyEventHandler((e: KeyboardEvent) => {
-      // Let Alt combos bubble to App.svelte for session switching
+      // Let Alt combos bubble to App.svelte for shortcuts
       if (e.altKey) return false;
-      // Let Ctrl+number bubble for session jumping
-      if (e.ctrlKey && e.key >= '1' && e.key <= '9') return false;
       if (e.ctrlKey && e.key === 'c' && terminal!.hasSelection()) {
         navigator.clipboard.writeText(terminal!.getSelection());
         return false;

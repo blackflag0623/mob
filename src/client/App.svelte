@@ -62,6 +62,26 @@
         wsClient.send({ type: 'resume', payload: { instanceId: inst.id } });
       }
     }
+    if (matchesShortcut(e, s.killInstance, isMac)) {
+      e.preventDefault();
+      const inst = $selectedInstance;
+      if (inst && inst.managed && inst.state !== 'stopped') {
+        if (confirm(`Kill instance "${inst.name}"?`)) {
+          wsClient.send({ type: 'kill', payload: { instanceId: inst.id } });
+        }
+      }
+    }
+    if (matchesShortcut(e, s.dismissInstance, isMac)) {
+      e.preventDefault();
+      const inst = $selectedInstance;
+      if (inst && inst.managed && inst.state === 'stopped') {
+        wsClient.send({ type: 'dismiss', payload: { instanceId: inst.id } });
+      }
+    }
+    if (matchesShortcut(e, s.openSettings, isMac)) {
+      e.preventDefault();
+      showSettingsDialog.update(v => !v);
+    }
     // Jump to instance 1-9
     for (let i = 1; i <= 9; i++) {
       const key = `jumpToInstance${i}` as keyof typeof s;
