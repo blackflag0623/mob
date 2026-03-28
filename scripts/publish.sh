@@ -32,13 +32,10 @@ fi
 VERSION=$(node -p "require('./package.json').version")
 echo "Publishing mob-coordinator@${VERSION}"
 
-# Build
-echo "Building..."
-npm run build
-
-# Publish
+# Publish (prepublishOnly in package.json handles the build)
+# Pass through any extra args (e.g. --otp=123456)
 echo "Publishing to npm..."
-npm publish
+npm publish "$@"
 
 echo ""
 echo "Published mob-coordinator@${VERSION}"
