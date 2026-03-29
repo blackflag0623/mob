@@ -222,6 +222,15 @@ Hooks are auto-installed on first launch to enable status reporting. They are ad
 
 ## Changelog
 
+### 0.4.2
+
+- **Create & Launch** — launching in a non-existent directory now prompts to create it instead of spawning a blank session
+- **Collapsed group awareness** — cycling with Alt+Up/Down into a collapsed project group shows a toast and highlights the group header
+- **Focus management** — terminal refocuses automatically when launch or settings dialog closes
+- **Autocomplete UX** — Escape dismisses the directory dropdown without closing the dialog; dropdown is smaller and dismisses on click
+- Fix instance cycling order to match grouped sidebar layout
+- Fix teardown RCE: replaced silent `sh -c` with visible PTY writes (security)
+
 ### 0.4.0
 
 - **Project grouping** — sidebar auto-groups instances by project directory when working across 2+ repos, with collapsible headers
