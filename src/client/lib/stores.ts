@@ -43,16 +43,18 @@ export interface ProjectGroup {
 export const groupedInstances = derived(sortedInstances, ($sorted) => {
   // Group by display name so that user-set project names merge with auto-detected ones
   // e.g. project="myapp" and gitRoot="/home/user/myapp" both resolve to group "myapp"
+  // Use case-insensitive key so "XNOW", "xnow", "Xnow" all merge into one group
   const groups = new Map<string, { name: string; instances: InstanceInfo[] }>();
   for (const instance of $sorted) {
     const cwd = instance.cwd || '';
     const dirName = cwd.split('/').filter(Boolean).pop() || 'Unknown';
     const name = instance.project
       || (instance.gitRoot ? instance.gitRoot.split('/').filter(Boolean).pop() || dirName : dirName);
-    let group = groups.get(name);
+    const key = name.toLowerCase();
+    let group = groups.get(key);
     if (!group) {
       group = { name, instances: [] };
-      groups.set(name, group);
+      groups.set(key, group);
     }
     group.instances.push(instance);
   }
