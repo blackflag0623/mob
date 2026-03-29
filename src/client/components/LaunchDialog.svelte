@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { showLaunchDialog, wsClient, settings, launchConflicts } from '../lib/stores.js';
+  import { showLaunchDialog, wsClient, settings, launchConflicts, instances } from '../lib/stores.js';
   import { get } from 'svelte/store';
   import type { LaunchConflicts } from '../lib/types.js';
 
@@ -8,6 +8,7 @@
   let name = '';
   let autoName = launchDefaults.autoName;
   let cwd = launchDefaults.cwd;
+  let project = '';
   let model = launchDefaults.model;
   let permissionMode = launchDefaults.permissionMode;
 
@@ -116,6 +117,7 @@
       name: autoName ? '' : (name.trim() || `Instance ${Date.now().toString(36)}`),
       autoName,
       cwd: cwd.trim(),
+      project: project.trim() || undefined,
       model: model || undefined,
       permissionMode: permissionMode || undefined,
       ...extra,
@@ -186,6 +188,7 @@
     name = '';
     autoName = defaults.autoName;
     cwd = defaults.cwd;
+    project = '';
     model = defaults.model;
     permissionMode = defaults.permissionMode;
     suggestions = [];
@@ -288,6 +291,11 @@
           </ul>
         {/if}
       </div>
+    </div>
+
+    <div class="field">
+      <label for="mob-launch-project">Project / Group</label>
+      <input id="mob-launch-project" type="text" bind:value={project} placeholder="(auto-detected from repo)" />
     </div>
 
     <div class="field">

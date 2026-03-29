@@ -237,6 +237,7 @@ export class InstanceManager extends EventEmitter {
       name: autoName ? dirName : (payload.name || id),
       managed: true,
       cwd: effectiveCwd,
+      project: payload.project,
       gitRoot: getGitRoot(effectiveCwd),
       gitBranch: getGitBranch(effectiveCwd),
       state: 'launching',
@@ -340,6 +341,7 @@ export class InstanceManager extends EventEmitter {
       state: 'launching',
       lastUpdated: now,
       createdAt: now,
+      project: old.project,
       model: old.model,
       permissionMode: old.permissionMode,
       previousInstanceId: instanceId,
@@ -394,6 +396,25 @@ export class InstanceManager extends EventEmitter {
     this.sessionStore.remove(instanceId);
     this.scrollbackBuffer.remove(instanceId);
     this.emit('remove', instanceId);
+  }
+
+  editInstance(instanceId: string, fields: { name?: string; project?: string; model?: string; permissionMode?: string }): boolean {
+    const info = this.instances.get(instanceId);
+    if (!info || !this.managedIds.has(instanceId)) return false;
+
+    if (fields.name !== undefined) {
+      info.name = fields.name;
+      // Disable auto-naming if user explicitly sets a name
+      if (fields.name) this.autoNameIds.delete(instanceId);
+    }
+    if (fields.project !== undefined) info.project = fields.project || undefined;
+    if (fields.model !== undefined) info.model = fields.model || undefined;
+    if (fields.permissionMode !== undefined) info.permissionMode = fields.permissionMode || undefined;
+
+    info.lastUpdated = Date.now();
+    this.emit('update', info);
+    this.sessionStore.save(info);
+    return true;
   }
 
   getScrollback(instanceId: string): string {
@@ -456,6 +477,7 @@ export class InstanceManager extends EventEmitter {
       name,
       managed: this.managedIds.has(data.id),
       cwd: data.cwd,
+      project: existing?.project,
       gitRoot: existing?.gitRoot || getGitRoot(data.cwd),
       gitBranch: data.gitBranch,
       state: data.state,

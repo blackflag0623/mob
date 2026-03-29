@@ -11,6 +11,7 @@ export interface SessionData {
   id: string;
   name: string;
   cwd: string;
+  project?: string;
   gitBranch?: string;
   model?: string;
   permissionMode?: string;
@@ -29,6 +30,7 @@ export class SessionStore {
       id: instance.id,
       name: instance.name,
       cwd: instance.cwd,
+      project: instance.project,
       gitBranch: instance.gitBranch,
       model: instance.model,
       permissionMode: instance.permissionMode,
@@ -81,6 +83,7 @@ export class SessionStore {
           name: data.name,
           managed: true,
           cwd: data.cwd,
+          project: data.project,
           gitRoot: getGitRoot(data.cwd),
           gitBranch: getGitBranch(data.cwd) || data.gitBranch,
           state: 'stopped',

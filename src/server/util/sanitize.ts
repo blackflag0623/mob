@@ -68,6 +68,7 @@ export interface ValidatedLaunchPayload {
   permissionMode?: string;
   cloneDir?: string;
   createDir?: boolean;
+  project?: string;
 }
 
 export function validateLaunchPayload(payload: unknown): { valid: true; data: ValidatedLaunchPayload } | { valid: false; error: string } {
@@ -116,6 +117,7 @@ export function validateLaunchPayload(payload: unknown): { valid: true; data: Va
       permissionMode: (typeof p.permissionMode === 'string' && p.permissionMode) || undefined,
       cloneDir: (typeof p.cloneDir === 'string' && p.cloneDir) || undefined,
       createDir: p.createDir === true ? true : undefined,
+      project: (typeof p.project === 'string' && p.project) ? stripControlChars(p.project).slice(0, 100) : undefined,
     },
   };
 }
@@ -165,4 +167,48 @@ export function validateHookPayload(data: unknown): { valid: true; data: Record<
   if (typeof d.hookEvent === 'string') d.hookEvent = stripControlChars(d.hookEvent).slice(0, 50);
 
   return { valid: true, data: d };
+}
+
+export interface ValidatedEditPayload {
+  instanceId: string;
+  name?: string;
+  project?: string;
+  model?: string;
+  permissionMode?: string;
+}
+
+export function validateEditPayload(payload: unknown): { valid: true; data: ValidatedEditPayload } | { valid: false; error: string } {
+  if (!payload || typeof payload !== 'object') {
+    return { valid: false, error: 'Payload must be an object' };
+  }
+  const p = payload as Record<string, unknown>;
+
+  if (typeof p.instanceId !== 'string' || !isValidInstanceId(p.instanceId)) {
+    return { valid: false, error: 'Invalid instanceId' };
+  }
+
+  const data: ValidatedEditPayload = { instanceId: p.instanceId };
+
+  if (p.name !== undefined) {
+    if (typeof p.name !== 'string') return { valid: false, error: 'Invalid name' };
+    data.name = stripControlChars(p.name).slice(0, 256);
+  }
+  if (p.project !== undefined) {
+    if (typeof p.project !== 'string') return { valid: false, error: 'Invalid project' };
+    data.project = stripControlChars(p.project).slice(0, 100);
+  }
+  if (p.model !== undefined) {
+    if (typeof p.model === 'string' && p.model !== '' && !isValidModel(p.model)) {
+      return { valid: false, error: 'Invalid model' };
+    }
+    data.model = (typeof p.model === 'string' && p.model) || '';
+  }
+  if (p.permissionMode !== undefined) {
+    if (typeof p.permissionMode === 'string' && p.permissionMode !== '' && !isValidPermissionMode(p.permissionMode)) {
+      return { valid: false, error: 'Invalid permissionMode' };
+    }
+    data.permissionMode = (typeof p.permissionMode === 'string' && p.permissionMode) || '';
+  }
+
+  return { valid: true, data };
 }

@@ -10,7 +10,8 @@ export type ClientMessage =
   | { type: 'terminal:unsubscribe'; payload: { instanceId: string } }
   | { type: 'terminal:input'; payload: { instanceId: string; data: string } }
   | { type: 'terminal:resize'; payload: { instanceId: string; cols: number; rows: number } }
-  | { type: 'update:install' };
+  | { type: 'update:install' }
+  | { type: 'instance:edit'; payload: InstanceEditPayload };
 
 export interface LaunchPayload {
   name: string;
@@ -20,6 +21,15 @@ export interface LaunchPayload {
   permissionMode?: string;
   cloneDir?: string;
   createDir?: boolean;
+  project?: string;
+}
+
+export interface InstanceEditPayload {
+  instanceId: string;
+  name?: string;
+  project?: string;
+  model?: string;
+  permissionMode?: string;
 }
 
 // Server → Client messages
@@ -47,6 +57,7 @@ export interface InstanceInfo {
   name: string;
   managed: boolean;
   cwd: string;
+  project?: string;
   gitRoot?: string;
   gitBranch?: string;
   state: InstanceState;

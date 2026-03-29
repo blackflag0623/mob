@@ -41,16 +41,14 @@ export interface ProjectGroup {
 }
 
 export const groupedInstances = derived(sortedInstances, ($sorted) => {
-  // Group by git repo root (same repo = same group), fall back to directory name
+  // Group key priority: user-set project > gitRoot > cwd
   const groups = new Map<string, { key: string; name: string; instances: InstanceInfo[] }>();
   for (const instance of $sorted) {
     const cwd = instance.cwd || '';
     const dirName = cwd.split('/').filter(Boolean).pop() || 'Unknown';
-    // Use gitRoot as group key so instances in the same repo cluster together
-    const key = instance.gitRoot || cwd;
-    const name = instance.gitRoot
-      ? instance.gitRoot.split('/').filter(Boolean).pop() || dirName
-      : dirName;
+    const key = instance.project || instance.gitRoot || cwd;
+    const name = instance.project
+      || (instance.gitRoot ? instance.gitRoot.split('/').filter(Boolean).pop() || dirName : dirName);
     let group = groups.get(key);
     if (!group) {
       group = { key, name, instances: [] };

@@ -3,7 +3,7 @@ import type { Server } from 'http';
 import type { InstanceManager } from './instance-manager.js';
 import type { PtyManager } from './pty-manager.js';
 import type { ClientMessage, ServerMessage } from '../shared/protocol.js';
-import { validateLaunchPayload } from './util/sanitize.js';
+import { validateLaunchPayload, validateEditPayload } from './util/sanitize.js';
 import { createLogger } from './util/logger.js';
 import { performUpdate } from './update-checker.js';
 
@@ -301,6 +301,21 @@ export function createWsServer(
           } else {
             isUpdating = false;
             broadcast({ type: 'update:status', payload: { status: 'failed', error: result.error } });
+          }
+          break;
+        }
+
+        case 'instance:edit': {
+          const editValidation = validateEditPayload(msg.payload);
+          if (!editValidation.valid) {
+            ws.send(JSON.stringify({ type: 'error', payload: { message: editValidation.error } }));
+            break;
+          }
+          const { instanceId: editId, ...editFields } = editValidation.data;
+          log.info(`Client #${clientId} editing instance ${editId}:`, editFields);
+          const edited = instanceManager.editInstance(editId, editFields);
+          if (!edited) {
+            ws.send(JSON.stringify({ type: 'error', payload: { message: 'Cannot edit instance', context: editId } }));
           }
           break;
         }
