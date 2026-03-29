@@ -278,21 +278,27 @@ export class InstanceManager extends EventEmitter {
     const info = this.instances.get(instanceId);
     this.log.info(`kill() called: id=${instanceId} name="${info?.name}" trace=${new Error().stack?.split('\n').slice(1, 4).map(s => s.trim()).join(' <- ')}`);
 
-    // Run teardown commands before killing (best-effort, non-blocking)
+    // Write teardown commands into the PTY (visible to the user) before killing.
+    // We avoid execFileSync('sh', ['-c', ...]) to prevent silent arbitrary command execution
+    // from untrusted .mob/config.json files (RCE via supply chain).
     const teardown = this.teardownCommands.get(instanceId);
-    if (teardown?.length && info?.cwd) {
+    if (teardown?.length && this.ptyManager.has(instanceId)) {
       for (const cmd of teardown) {
-        try {
-          this.log.info(`Running teardown for ${instanceId}: ${cmd}`);
-          execFileSync('sh', ['-c', cmd], { cwd: info.cwd, timeout: 10_000, stdio: 'ignore' });
-        } catch (err) {
-          this.log.warn(`Teardown command failed for ${instanceId}:`, String(err));
-        }
+        this.log.info(`Running teardown for ${instanceId}: ${cmd}`);
+        this.ptyManager.write(instanceId, cmd + '\r');
       }
       this.teardownCommands.delete(instanceId);
     }
 
-    this.ptyManager.kill(instanceId);
+    // Brief delay to let teardown commands start executing before kill
+    const doKill = () => {
+      this.ptyManager.kill(instanceId);
+    };
+    if (teardown?.length) {
+      setTimeout(doKill, 500);
+    } else {
+      doKill();
+    }
     if (info) {
       info.state = 'stopped';
       info.stoppedAt = Date.now();

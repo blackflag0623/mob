@@ -14,9 +14,28 @@ export interface ProjectConfig {
   };
 }
 
+const MAX_COMMANDS = 10;
+const MAX_COMMAND_LENGTH = 500;
+
+function validateCommands(arr: unknown): string[] | undefined {
+  if (!Array.isArray(arr)) return undefined;
+  const commands: string[] = [];
+  for (const item of arr.slice(0, MAX_COMMANDS)) {
+    if (typeof item !== 'string') continue;
+    const trimmed = item.trim();
+    if (trimmed.length === 0 || trimmed.length > MAX_COMMAND_LENGTH) continue;
+    commands.push(trimmed);
+  }
+  return commands.length > 0 ? commands : undefined;
+}
+
 /**
  * Load .mob/config.json from a project directory.
  * Returns null if not found or invalid.
+ *
+ * Setup/teardown commands are written into the PTY (visible to the user),
+ * not executed silently. Validation caps array length and command length
+ * as defense-in-depth.
  */
 export function loadProjectConfig(cwd: string): ProjectConfig | null {
   const configPath = path.join(cwd, '.mob', 'config.json');
@@ -24,15 +43,11 @@ export function loadProjectConfig(cwd: string): ProjectConfig | null {
     const raw = fs.readFileSync(configPath, 'utf8');
     const parsed = JSON.parse(raw);
 
-    // Basic validation
     const config: ProjectConfig = {};
 
-    if (Array.isArray(parsed.setup) && parsed.setup.every((s: unknown) => typeof s === 'string')) {
-      config.setup = parsed.setup;
-    }
-    if (Array.isArray(parsed.teardown) && parsed.teardown.every((s: unknown) => typeof s === 'string')) {
-      config.teardown = parsed.teardown;
-    }
+    config.setup = validateCommands(parsed.setup);
+    config.teardown = validateCommands(parsed.teardown);
+
     if (parsed.defaults && typeof parsed.defaults === 'object') {
       config.defaults = {};
       if (typeof parsed.defaults.model === 'string') config.defaults.model = parsed.defaults.model;
