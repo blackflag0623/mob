@@ -41,18 +41,18 @@ export interface ProjectGroup {
 }
 
 export const groupedInstances = derived(sortedInstances, ($sorted) => {
-  // Group key priority: user-set project > gitRoot > cwd
-  const groups = new Map<string, { key: string; name: string; instances: InstanceInfo[] }>();
+  // Group by display name so that user-set project names merge with auto-detected ones
+  // e.g. project="myapp" and gitRoot="/home/user/myapp" both resolve to group "myapp"
+  const groups = new Map<string, { name: string; instances: InstanceInfo[] }>();
   for (const instance of $sorted) {
     const cwd = instance.cwd || '';
     const dirName = cwd.split('/').filter(Boolean).pop() || 'Unknown';
-    const key = instance.project || instance.gitRoot || cwd;
     const name = instance.project
       || (instance.gitRoot ? instance.gitRoot.split('/').filter(Boolean).pop() || dirName : dirName);
-    let group = groups.get(key);
+    let group = groups.get(name);
     if (!group) {
-      group = { key, name, instances: [] };
-      groups.set(key, group);
+      group = { name, instances: [] };
+      groups.set(name, group);
     }
     group.instances.push(instance);
   }
