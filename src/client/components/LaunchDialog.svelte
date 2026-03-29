@@ -266,7 +266,7 @@
             use:autofocus
           />
           {#if canBrowse}
-            <button class="browse-btn" on:click={browseDir} disabled={browsing} title="Browse for folder">
+            <button type="button" class="browse-btn" on:click={browseDir} disabled={browsing} title="Browse for folder">
               {#if browsing}
                 ...
               {:else}
