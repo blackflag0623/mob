@@ -35,6 +35,9 @@
     refocusTerminal();
   }
 
+  // Refocus terminal when dialogs close
+  $: if (!$showLaunchDialog && !$showSettingsDialog) refocusTerminal();
+
   function handleKeydown(e: KeyboardEvent) {
     const s = $settings.shortcuts;
     if (matchesShortcut(e, s.launchDialog, isMac)) {
