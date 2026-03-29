@@ -1,8 +1,10 @@
 import { readFileSync } from 'fs';
-import { execSync } from 'child_process';
+import { execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { createLogger } from './util/logger.js';
+
+const SEMVER_RE = /^\d+\.\d+\.\d+(-[\w.]+)?$/;
 
 const log = createLogger('update');
 
@@ -39,7 +41,7 @@ export async function checkForUpdate(): Promise<{ current: string; latest: strin
     }
     const data = await res.json();
     const latest = data['dist-tags']?.latest;
-    if (!latest || !isNewer(latest, current)) {
+    if (!latest || typeof latest !== 'string' || !SEMVER_RE.test(latest) || !isNewer(latest, current)) {
       cached = null;
       return null;
     }
@@ -52,17 +54,25 @@ export async function checkForUpdate(): Promise<{ current: string; latest: strin
 }
 
 export function performUpdate(latest: string): { success: boolean; error?: string } {
+  if (!SEMVER_RE.test(latest)) {
+    return { success: false, error: 'Invalid version format' };
+  }
   try {
     log.info(`Installing mob-coordinator@${latest}...`);
-    execSync(`npm install -g mob-coordinator@${latest}`, {
-      timeout: 60_000,
+    execFileSync('npm', ['install', '-g', `mob-coordinator@${latest}`], {
+      timeout: 30_000,
       stdio: 'pipe',
     });
     log.info('Update installed successfully');
     return { success: true };
   } catch (err: any) {
-    const error = err.stderr?.toString() || err.message || 'Unknown error';
-    log.error('Update failed:', error);
-    return { success: false, error };
+    const raw = err.stderr?.toString() || err.message || 'Unknown error';
+    log.error('Update failed:', raw);
+    // Sanitize before returning to clients — strip paths and tokens
+    const sanitized = raw
+      .replace(/\/(?:home|Users|root|usr|tmp)\/[^\s]*/g, '<path>')
+      .replace(/\/\/registry\.[^\s]*/g, '<registry>')
+      .slice(0, 200);
+    return { success: false, error: sanitized };
   }
 }

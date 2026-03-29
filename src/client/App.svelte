@@ -132,7 +132,13 @@
         <button class="update-dismiss" on:click={() => { updateAvailable.set(null); updateStatus.set('idle'); }}>×</button>
       {:else}
         <span class="update-text">Update available: v{$updateAvailable.current} → v{$updateAvailable.latest}</span>
-        <button class="update-btn" on:click={() => wsClient.send({ type: 'update:install' })}>Update now</button>
+        <button class="update-btn" on:click={() => {
+          const active = $sortedInstances.filter(i => i.managed && i.state !== 'stopped').length;
+          const msg = active > 0
+            ? `${active} active session(s) will be terminated. Install update?`
+            : 'Install update? The server will restart briefly.';
+          if (confirm(msg)) wsClient.send({ type: 'update:install' });
+        }}>Update now</button>
         <button class="update-dismiss" on:click={() => updateAvailable.set(null)}>×</button>
       {/if}
     </div>

@@ -44,7 +44,7 @@ const wsHandle = createWsServer(server, instanceManager, ptyManager);
 
 wsHandle.onUpdateRestart(() => {
   console.log('Update installed, restarting...');
-  process.exit(RESTART_EXIT_CODE);
+  gracefulShutdown(() => process.exit(RESTART_EXIT_CODE));
 });
 
 discovery.start();
@@ -65,7 +65,7 @@ server.listen(port, host, () => {
 });
 
 // Graceful shutdown
-function shutdown() {
+function gracefulShutdown(done: () => void) {
   console.log('\nShutting down...');
   instanceManager.saveAllAsStopped();
 
@@ -81,9 +81,9 @@ function shutdown() {
   // Brief grace period for clean exit
   setTimeout(() => {
     server.close();
-    process.exit(0);
+    done();
   }, 500);
 }
 
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+process.on('SIGINT', () => gracefulShutdown(() => process.exit(0)));
+process.on('SIGTERM', () => gracefulShutdown(() => process.exit(0)));

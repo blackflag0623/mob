@@ -19,7 +19,8 @@ if (subcommand === 'install-hooks') {
   const serverEntry = join(root, 'dist', 'server', 'server', 'index.js');
   const RESTART_EXIT_CODE = 75;
 
-  function startServer() {
+  function startServer(isRestart = false) {
+    const startTime = Date.now();
     const child = spawn(process.execPath, [serverEntry], {
       cwd: root,
       stdio: 'inherit',
@@ -29,7 +30,10 @@ if (subcommand === 'install-hooks') {
     child.on('exit', (code) => {
       if (code === RESTART_EXIT_CODE) {
         console.log('Update installed, restarting server...');
-        startServer();
+        startServer(true);
+      } else if (isRestart && code !== 0 && Date.now() - startTime < 5000) {
+        console.error(`Server crashed after update (exit ${code}). Try: npm i -g mob-coordinator`);
+        process.exit(code ?? 1);
       } else {
         process.exit(code ?? 0);
       }

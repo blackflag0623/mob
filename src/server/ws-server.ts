@@ -24,6 +24,7 @@ export function createWsServer(
   let clientCount = 0;
   let updateInfo: { current: string; latest: string } | null = null;
   let restartCallback: (() => void) | null = null;
+  let isUpdating = false;
 
   log.info( 'WebSocket server created on path /mob-ws');
 
@@ -216,6 +217,13 @@ export function createWsServer(
           break;
 
         case 'update:install': {
+          if (isUpdating) {
+            ws.send(JSON.stringify({
+              type: 'error',
+              payload: { message: 'Update already in progress' },
+            }));
+            break;
+          }
           if (!updateInfo) {
             ws.send(JSON.stringify({
               type: 'error',
@@ -223,6 +231,7 @@ export function createWsServer(
             }));
             break;
           }
+          isUpdating = true;
           log.info(`Client #${clientId} triggered update to ${updateInfo.latest}`);
           broadcast({ type: 'update:status', payload: { status: 'installing' } });
           const result = performUpdate(updateInfo.latest);
@@ -233,6 +242,7 @@ export function createWsServer(
               if (restartCallback) restartCallback();
             }, 1000);
           } else {
+            isUpdating = false;
             broadcast({ type: 'update:status', payload: { status: 'failed', error: result.error } });
           }
           break;
