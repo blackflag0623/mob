@@ -1,8 +1,7 @@
 <script lang="ts">
   import InstanceList from './InstanceList.svelte';
   import TerminalPanel from './TerminalPanel.svelte';
-  import { selectedInstance, selectedInstanceId, sidebarCollapsed, visualInstances } from '../lib/stores.js';
-  import type { InstanceState } from '../../shared/protocol.js';
+  import { selectedInstance, selectedInstanceId, sidebarCollapsed, visualInstances, selectedInCollapsedGroup } from '../lib/stores.js';
 
   let toast: { name: string; branch?: string; cwd: string } | null = null;
   let toastKey = 0;
@@ -19,7 +18,7 @@
   $: {
     const id = $selectedInstanceId;
     const inst = $selectedInstance;
-    if ($sidebarCollapsed && inst && id !== prevInstanceId) {
+    if (inst && id !== prevInstanceId && ($sidebarCollapsed || $selectedInCollapsedGroup)) {
       showToast(inst);
     }
     prevInstanceId = id;

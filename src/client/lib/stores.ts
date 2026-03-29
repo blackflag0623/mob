@@ -67,6 +67,23 @@ export const visualInstances = derived([groupedInstances, sortedInstances], ([$g
   return $grouped.flatMap(g => g.instances);
 });
 
+// Track which project groups are collapsed in the sidebar
+export const collapsedGroups = writable<Record<string, boolean>>({});
+
+// Whether the currently selected instance is hidden inside a collapsed project group
+export const selectedInCollapsedGroup = derived(
+  [selectedInstanceId, groupedInstances, collapsedGroups],
+  ([$id, $groups, $collapsed]) => {
+    if (!$id || $groups.length <= 1) return false;
+    for (const group of $groups) {
+      if (group.instances.some(i => i.id === $id)) {
+        return !!$collapsed[group.project];
+      }
+    }
+    return false;
+  },
+);
+
 // Wire up WebSocket to stores
 wsClient.setConnectionHandler((connected) => {
   wsConnected.set(connected);

@@ -1,6 +1,6 @@
 <script lang="ts">
   import InstanceCard from './InstanceCard.svelte';
-  import { sortedInstances, groupedInstances, wsClient } from '../lib/stores.js';
+  import { sortedInstances, groupedInstances, selectedInstanceId, collapsedGroups, wsClient } from '../lib/stores.js';
 
   $: resumableInstances = $sortedInstances.filter(
     (i) => i.managed && i.state === 'stopped'
@@ -9,12 +9,18 @@
   // Show grouped view when instances span 2+ projects
   $: useGrouped = $groupedInstances.length > 1;
 
-  // Track collapsed project groups
-  let collapsedGroups: Record<string, boolean> = {};
+  // Determine which project group contains the selected instance
+  $: selectedProject = (() => {
+    const id = $selectedInstanceId;
+    if (!id || !useGrouped) return null;
+    for (const group of $groupedInstances) {
+      if (group.instances.some(i => i.id === id)) return group.project;
+    }
+    return null;
+  })();
 
   function toggleGroup(project: string) {
-    collapsedGroups[project] = !collapsedGroups[project];
-    collapsedGroups = collapsedGroups;
+    collapsedGroups.update(g => ({ ...g, [project]: !g[project] }));
   }
 
   function resumeAll() {
@@ -43,13 +49,14 @@
           <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions a11y_no_static_element_interactions -->
           <div
             class="project-header"
+            class:has-selected={$collapsedGroups[group.project] && selectedProject === group.project}
             on:click={() => toggleGroup(group.project)}
           >
-            <span class="collapse-icon" class:collapsed={collapsedGroups[group.project]}>&#9662;</span>
+            <span class="collapse-icon" class:collapsed={$collapsedGroups[group.project]}>&#9662;</span>
             <span class="project-name">{group.project}</span>
             <span class="project-count">{group.instances.length}</span>
           </div>
-          {#if !collapsedGroups[group.project]}
+          {#if !$collapsedGroups[group.project]}
             {#each group.instances as instance (instance.id)}
               <InstanceCard {instance} />
             {/each}
@@ -124,6 +131,16 @@
 
   .project-header:hover {
     background: rgba(255, 255, 255, 0.05);
+  }
+
+  .project-header.has-selected {
+    background: rgba(88, 166, 255, 0.12);
+    border-left: 2px solid var(--accent);
+    padding-left: 6px;
+  }
+
+  .project-header.has-selected .project-name {
+    color: var(--accent);
   }
 
   .collapse-icon {
