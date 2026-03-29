@@ -8,7 +8,8 @@ export type ClientMessage =
   | { type: 'terminal:subscribe'; payload: { instanceId: string } }
   | { type: 'terminal:unsubscribe'; payload: { instanceId: string } }
   | { type: 'terminal:input'; payload: { instanceId: string; data: string } }
-  | { type: 'terminal:resize'; payload: { instanceId: string; cols: number; rows: number } };
+  | { type: 'terminal:resize'; payload: { instanceId: string; cols: number; rows: number } }
+  | { type: 'update:install' };
 
 export interface LaunchPayload {
   name: string;
@@ -20,14 +21,15 @@ export interface LaunchPayload {
 
 // Server → Client messages
 export type ServerMessage =
-  | { type: 'snapshot'; payload: { instances: InstanceInfo[] } }
+  | { type: 'snapshot'; payload: { instances: InstanceInfo[]; updateAvailable?: { current: string; latest: string } } }
   | { type: 'instance:update'; payload: InstanceInfo }
   | { type: 'instance:remove'; payload: { instanceId: string } }
   | { type: 'terminal:output'; payload: { instanceId: string; data: string } }
   | { type: 'terminal:scrollback'; payload: { instanceId: string; data: string } }
   | { type: 'terminal:exit'; payload: { instanceId: string; exitCode: number } }
   | { type: 'error'; payload: { message: string; context?: string } }
-  | { type: 'instance:select'; payload: { instanceId: string } };
+  | { type: 'instance:select'; payload: { instanceId: string } }
+  | { type: 'update:status'; payload: { status: 'installing' | 'success' | 'failed'; error?: string } };
 
 export interface InstanceInfo {
   id: string;

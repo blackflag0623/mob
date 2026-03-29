@@ -2,7 +2,7 @@
   import Dashboard from './components/Dashboard.svelte';
   import LaunchDialog from './components/LaunchDialog.svelte';
   import SettingsDialog from './components/SettingsDialog.svelte';
-  import { showLaunchDialog, showSettingsDialog, wsConnected, sortedInstances, selectedInstanceId, selectedInstance, sidebarCollapsed, errors, settings, wsClient } from './lib/stores.js';
+  import { showLaunchDialog, showSettingsDialog, wsConnected, sortedInstances, selectedInstanceId, selectedInstance, sidebarCollapsed, errors, settings, wsClient, updateAvailable, updateStatus, updateError } from './lib/stores.js';
   import { matchesShortcut, formatShortcut } from './lib/shortcuts.js';
 
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -121,6 +121,22 @@
       </button>
     </div>
   </header>
+  {#if $updateAvailable}
+    <div class="update-banner">
+      {#if $updateStatus === 'installing'}
+        <span class="update-text">Installing update...</span>
+      {:else if $updateStatus === 'success'}
+        <span class="update-text">Updated! Reconnecting...</span>
+      {:else if $updateStatus === 'failed'}
+        <span class="update-text">Update failed{$updateError ? `: ${$updateError}` : ''}. Run: <code>npm i -g mob-coordinator</code></span>
+        <button class="update-dismiss" on:click={() => { updateAvailable.set(null); updateStatus.set('idle'); }}>×</button>
+      {:else}
+        <span class="update-text">Update available: v{$updateAvailable.current} → v{$updateAvailable.latest}</span>
+        <button class="update-btn" on:click={() => wsClient.send({ type: 'update:install' })}>Update now</button>
+        <button class="update-dismiss" on:click={() => updateAvailable.set(null)}>×</button>
+      {/if}
+    </div>
+  {/if}
   <Dashboard />
   {#if $showLaunchDialog}
     <LaunchDialog />
@@ -246,6 +262,59 @@
     font-size: 11px;
     opacity: 0.7;
     margin-left: 4px;
+  }
+
+  .update-banner {
+    background: rgba(88, 166, 255, 0.1);
+    border-bottom: 1px solid rgba(88, 166, 255, 0.3);
+    padding: 6px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .update-text {
+    flex: 1;
+  }
+
+  .update-text code {
+    font-size: 12px;
+    background: rgba(88, 166, 255, 0.15);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  .update-btn {
+    font-size: 12px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: background 0.15s;
+  }
+
+  .update-btn:hover {
+    background: var(--accent-hover);
+  }
+
+  .update-dismiss {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+  }
+
+  .update-dismiss:hover {
+    color: var(--text-primary);
   }
 
   .error-toast-container {

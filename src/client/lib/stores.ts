@@ -15,6 +15,9 @@ export const showSettingsDialog = writable(false);
 export const settings = writable<Settings>(structuredClone(DEFAULT_SETTINGS));
 export const sidebarCollapsed = writable(false);
 export const errors = writable<Array<{ message: string; context?: string; timestamp: number }>>([]);
+export const updateAvailable = writable<{ current: string; latest: string } | null>(null);
+export const updateStatus = writable<'idle' | 'installing' | 'success' | 'failed'>('idle');
+export const updateError = writable<string | null>(null);
 
 export const selectedInstance = derived(
   [instances, selectedInstanceId],
@@ -48,6 +51,9 @@ wsClient.onMessage((msg) => {
   switch (msg.type) {
     case 'snapshot':
       instances.set(new Map(msg.payload.instances.map((i) => [i.id, i])));
+      if (msg.payload.updateAvailable) {
+        updateAvailable.set(msg.payload.updateAvailable);
+      }
       break;
     case 'instance:update':
       instances.update((map) => {
@@ -80,6 +86,12 @@ wsClient.onMessage((msg) => {
         ...errs.slice(-19), // keep last 20
         { message: msg.payload.message, context: msg.payload.context, timestamp: Date.now() },
       ]);
+      break;
+    case 'update:status':
+      updateStatus.set(msg.payload.status);
+      if (msg.payload.error) {
+        updateError.set(msg.payload.error);
+      }
       break;
   }
 

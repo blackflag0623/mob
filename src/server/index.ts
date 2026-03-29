@@ -10,6 +10,9 @@ import { SettingsManager } from './settings-manager.js';
 import { ensureDir, getMobDir, getInstancesDir, getSessionsDir, getScrollbackDir } from './util/platform.js';
 import { DEFAULT_PORT } from '../shared/constants.js';
 import { installHooks } from './hooks.js';
+import { checkForUpdate } from './update-checker.js';
+
+const RESTART_EXIT_CODE = 75;
 
 const port = parseInt(process.env.MOB_PORT || '', 10) || DEFAULT_PORT;
 const host = process.env.MOB_HOST || '127.0.0.1';
@@ -37,7 +40,12 @@ const instanceManager = new InstanceManager(ptyManager, discovery, sessionStore,
 
 const app = createApp(instanceManager, settingsManager);
 const server = http.createServer(app);
-createWsServer(server, instanceManager, ptyManager);
+const wsHandle = createWsServer(server, instanceManager, ptyManager);
+
+wsHandle.onUpdateRestart(() => {
+  console.log('Update installed, restarting...');
+  process.exit(RESTART_EXIT_CODE);
+});
 
 discovery.start();
 instanceManager.startStaleCheck();
@@ -45,6 +53,15 @@ instanceManager.startStaleCheck();
 server.listen(port, host, () => {
   console.log(`Mob dashboard running at http://${host}:${port}`);
   console.log(`WebSocket endpoint: ws://${host}:${port}/mob-ws`);
+
+  // Check for updates in background after server is ready
+  checkForUpdate().then((update) => {
+    if (update) {
+      console.log(`\nUpdate available: ${update.current} → ${update.latest}`);
+      console.log(`Run: npm i -g mob-coordinator\n`);
+      wsHandle.setUpdateInfo(update);
+    }
+  });
 });
 
 // Graceful shutdown

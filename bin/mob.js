@@ -17,15 +17,27 @@ if (subcommand === 'install-hooks') {
   uninstallHooks();
 } else {
   const serverEntry = join(root, 'dist', 'server', 'server', 'index.js');
+  const RESTART_EXIT_CODE = 75;
 
-  // Run the server, forwarding stdio and signals
-  const child = spawn(process.execPath, [serverEntry], {
-    cwd: root,
-    stdio: 'inherit',
-    env: { ...process.env },
-  });
+  function startServer() {
+    const child = spawn(process.execPath, [serverEntry], {
+      cwd: root,
+      stdio: 'inherit',
+      env: { ...process.env },
+    });
 
-  child.on('exit', (code) => process.exit(code ?? 0));
-  process.on('SIGINT', () => child.kill('SIGINT'));
-  process.on('SIGTERM', () => child.kill('SIGTERM'));
+    child.on('exit', (code) => {
+      if (code === RESTART_EXIT_CODE) {
+        console.log('Update installed, restarting server...');
+        startServer();
+      } else {
+        process.exit(code ?? 0);
+      }
+    });
+
+    process.on('SIGINT', () => child.kill('SIGINT'));
+    process.on('SIGTERM', () => child.kill('SIGTERM'));
+  }
+
+  startServer();
 }

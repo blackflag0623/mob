@@ -5,16 +5,25 @@ import type { PtyManager } from './pty-manager.js';
 import type { ClientMessage, ServerMessage } from '../shared/protocol.js';
 import { validateLaunchPayload } from './util/sanitize.js';
 import { createLogger } from './util/logger.js';
+import { performUpdate } from './update-checker.js';
 
 const log = createLogger('ws');
+
+export interface WsServerHandle {
+  wss: WebSocketServer;
+  setUpdateInfo(info: { current: string; latest: string } | null): void;
+  onUpdateRestart(callback: () => void): void;
+}
 
 export function createWsServer(
   server: Server,
   instanceManager: InstanceManager,
   ptyManager: PtyManager,
-): WebSocketServer {
+): WsServerHandle {
   const wss = new WebSocketServer({ server, path: '/mob-ws' });
   let clientCount = 0;
+  let updateInfo: { current: string; latest: string } | null = null;
+  let restartCallback: (() => void) | null = null;
 
   log.info( 'WebSocket server created on path /mob-ws');
 
@@ -85,7 +94,7 @@ export function createWsServer(
     log.info( `Sending snapshot to #${clientId}: ${snapshot.length} instance(s)`);
     ws.send(JSON.stringify({
       type: 'snapshot',
-      payload: { instances: snapshot },
+      payload: { instances: snapshot, ...(updateInfo ? { updateAvailable: updateInfo } : {}) },
     } satisfies ServerMessage));
 
     ws.on('message', (raw) => {
@@ -104,7 +113,7 @@ export function createWsServer(
         case 'sync':
           ws.send(JSON.stringify({
             type: 'snapshot',
-            payload: { instances: instanceManager.getAll() },
+            payload: { instances: instanceManager.getAll(), ...(updateInfo ? { updateAvailable: updateInfo } : {}) },
           } satisfies ServerMessage));
           break;
 
@@ -206,6 +215,29 @@ export function createWsServer(
           );
           break;
 
+        case 'update:install': {
+          if (!updateInfo) {
+            ws.send(JSON.stringify({
+              type: 'error',
+              payload: { message: 'No update available' },
+            }));
+            break;
+          }
+          log.info(`Client #${clientId} triggered update to ${updateInfo.latest}`);
+          broadcast({ type: 'update:status', payload: { status: 'installing' } });
+          const result = performUpdate(updateInfo.latest);
+          if (result.success) {
+            broadcast({ type: 'update:status', payload: { status: 'success' } });
+            // Give clients a moment to receive the success message before restarting
+            setTimeout(() => {
+              if (restartCallback) restartCallback();
+            }, 1000);
+          } else {
+            broadcast({ type: 'update:status', payload: { status: 'failed', error: result.error } });
+          }
+          break;
+        }
+
         default:
           log.warn( `Client #${clientId}: unknown message type`);
           ws.send(JSON.stringify({
@@ -227,5 +259,13 @@ export function createWsServer(
     });
   });
 
-  return wss;
+  return {
+    wss,
+    setUpdateInfo(info: { current: string; latest: string } | null) {
+      updateInfo = info;
+    },
+    onUpdateRestart(callback: () => void) {
+      restartCallback = callback;
+    },
+  };
 }
