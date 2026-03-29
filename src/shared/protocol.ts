@@ -59,6 +59,7 @@ export interface InstanceInfo {
   cwd: string;
   project?: string;
   gitRoot?: string;
+  gitRemoteUrl?: string;
   gitBranch?: string;
   state: InstanceState;
   ticket?: string;

@@ -40,17 +40,37 @@ export interface ProjectGroup {
   instances: InstanceInfo[];
 }
 
+// Extract repo name from a git remote URL (e.g. "git@github.com:user/xnow.git" → "xnow")
+function repoNameFromUrl(url: string): string | undefined {
+  const match = url.match(/\/([^/]+?)(?:\.git)?$/);
+  return match ? match[1] : undefined;
+}
+
 export const groupedInstances = derived(sortedInstances, ($sorted) => {
-  // Group by display name so that user-set project names merge with auto-detected ones
-  // e.g. project="myapp" and gitRoot="/home/user/myapp" both resolve to group "myapp"
-  // Use case-insensitive key so "XNOW", "xnow", "Xnow" all merge into one group
+  // Group priority: user-set project > git remote URL (same repo) > git root > directory
+  // Case-insensitive keys so "XNOW" and "xnow" merge
+  //
+  // First pass: build a map from remote URL → display name (first instance's repo name wins)
+  const remoteToName = new Map<string, string>();
+  for (const instance of $sorted) {
+    if (instance.gitRemoteUrl && !remoteToName.has(instance.gitRemoteUrl)) {
+      const repoName = repoNameFromUrl(instance.gitRemoteUrl);
+      if (repoName) remoteToName.set(instance.gitRemoteUrl, repoName);
+    }
+  }
+
   const groups = new Map<string, { name: string; instances: InstanceInfo[] }>();
   for (const instance of $sorted) {
     const cwd = instance.cwd || '';
     const dirName = cwd.split('/').filter(Boolean).pop() || 'Unknown';
+    // Derive display name: project > remote repo name > gitRoot dirname > cwd dirname
     const name = instance.project
+      || (instance.gitRemoteUrl ? remoteToName.get(instance.gitRemoteUrl) : undefined)
       || (instance.gitRoot ? instance.gitRoot.split('/').filter(Boolean).pop() || dirName : dirName);
-    const key = name.toLowerCase();
+    // Key: project > remote URL (so clones merge) > name
+    const key = instance.project?.toLowerCase()
+      || instance.gitRemoteUrl?.toLowerCase()
+      || name.toLowerCase();
     let group = groups.get(key);
     if (!group) {
       group = { name, instances: [] };
