@@ -3,11 +3,9 @@ import path from 'path';
 import { getSessionsDir, getScrollbackDir, getGitBranch } from './util/platform.js';
 import { SESSION_MAX_AGE_MS } from '../shared/constants.js';
 import type { InstanceInfo } from '../shared/protocol.js';
+import { createLogger } from './util/logger.js';
 
-function log(...args: unknown[]) {
-  const ts = new Date().toISOString().slice(11, 23);
-  console.log(`[${ts}] [session-store]`, ...args);
-}
+const log = createLogger('session-store');
 
 export interface SessionData {
   id: string;
@@ -46,7 +44,7 @@ export class SessionStore {
     try {
       fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
     } catch (err) {
-      log(`Failed to save session ${instance.id}:`, err);
+      log.error(`Failed to save session ${instance.id}:`, err);
     }
   }
 
@@ -95,11 +93,11 @@ export class SessionStore {
           autoResume: data.autoResume,
         });
       } catch (err) {
-        log(`Failed to load session from ${file}:`, err);
+        log.error(`Failed to load session from ${file}:`, err);
       }
     }
 
-    log(`Loaded ${instances.length} previous session(s)`);
+    log.info(`Loaded ${instances.length} previous session(s)`);
     return instances;
   }
 
@@ -130,7 +128,7 @@ export class SessionStore {
       }
     }
 
-    if (pruned > 0) log(`Pruned ${pruned} expired session(s)`);
+    if (pruned > 0) log.info(`Pruned ${pruned} expired session(s)`);
   }
 
   remove(instanceId: string): void {

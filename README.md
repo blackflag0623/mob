@@ -2,6 +2,8 @@
 
 A local web dashboard for coordinating multiple Claude Code CLI sessions. Launch, monitor, and switch between Claude instances working across different projects — all from a single browser tab.
 
+![mob dashboard](docs/screenshot.png)
+
 ## Features
 
 - **Launch and manage** multiple Claude Code sessions from a web UI
@@ -38,6 +40,7 @@ Claude Code hooks are installed automatically on first launch. These enable stat
 ```bash
 mob install-hooks      # Re-install hooks
 mob uninstall-hooks    # Remove hooks
+mob --no-hooks         # Start without installing/updating hooks
 ```
 
 ### Development
@@ -118,6 +121,8 @@ If configured in Settings > JIRA, mob will:
 - Show clickable ticket links in instance cards
 - Fetch and display the current ticket status from JIRA
 
+JIRA credentials are stored in `~/.mob/settings.json` with 0600 permissions (owner read/write only), similar to how `~/.npmrc` or `~/.netrc` store tokens. The API token is redacted in the web UI. We recommend using a JIRA API token with minimal (read-only) permissions.
+
 ### External Instances
 
 Claude Code sessions started outside of mob (e.g., directly in a terminal) will appear in the dashboard as "external" instances if the hooks are installed. They show status, branch, and state but don't provide terminal I/O.
@@ -165,11 +170,59 @@ MOB_PORT=4050 npm run dev
 2. Check `~/.claude/settings.json` has entries for `PreToolUse`, `PostToolUse`, `Stop`, `UserPromptSubmit`, and `Notification`
 3. On Windows, ensure PowerShell can run the hook script (execution policy)
 
+### `npm audit` reports vulnerabilities
+
+`npm audit` may report moderate vulnerabilities in vite (a dev-only build tool). These are **not included** in the published npm package — only the pre-built `dist/` directory ships. You can verify with `npm ls vite` in the installed package.
+
 ### Instance stuck in wrong state
 
 If hooks aren't firing (crash, subtask weirdness), the terminal state fallback should correct the state within ~15 seconds. If an instance shows as running but the PTY process is dead, it will be marked stopped automatically on the next stale check cycle.
 
+## FAQ
+
+**Why not just use tmux/screen?**
+tmux gives you multiple terminals. mob adds a Claude-specific dashboard layer: visual state indicators (working/waiting/idle), auto-naming sessions based on what Claude is doing, JIRA ticket detection from branches, browser notifications when Claude needs your input, and one-click session resume.
+
+**Why only Claude Code? What about Cursor/Copilot/Aider?**
+mob uses Claude Code's hook system for real-time status reporting. Supporting other tools would require each to expose a similar hook/event API. PRs welcome if someone wants to add support for other tools.
+
+**Is remote/team use planned?**
+mob is a personal productivity tool by design. Localhost-only means zero auth, zero cloud dependency, zero data leaving your machine.
+
+**The name "mob" conflicts with mob.sh / mob programming.**
+The npm package is `mob-coordinator` to avoid conflicts. The CLI command is `mob` for brevity.
+
+**Does mob modify my Claude Code settings?**
+Hooks are auto-installed on first launch to enable status reporting. They are additive and don't overwrite existing configuration. You can skip them with `mob --no-hooks` or remove them with `mob uninstall-hooks`.
+
 ## Changelog
+
+### 0.3.7
+
+- Add WebSocket origin validation to prevent cross-site WebSocket hijacking
+
+### 0.3.6
+
+- Harden auto-updater: validate versions, use `execFileSync` instead of shell, sanitize error output
+- Graceful shutdown with PTY cleanup and state persistence
+- Active session warning before updates
+
+### 0.3.5
+
+- Self-updating: check npm registry for new versions and update in-place from the UI
+
+### 0.3.4
+
+- "Resume All" button when multiple stopped sessions exist
+
+### 0.3.3
+
+- Test suite for core server and shared logic (sanitization, scrollback buffer, settings, terminal state detection, keyboard shortcuts)
+
+### 0.3.1
+
+- Collapsed sidebar status squares for at-a-glance state
+- Auto-scroll terminal to bottom on session switch
 
 ### 0.3.0
 

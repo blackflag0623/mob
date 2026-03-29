@@ -183,5 +183,11 @@ export function createApp(instanceManager: InstanceManager, settingsManager: Set
     });
   }
 
+  // Global error handler
+  app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+    log.error('Unhandled route error:', err.message || err);
+    res.status(500).json({ error: 'Internal server error' });
+  });
+
   return app;
 }

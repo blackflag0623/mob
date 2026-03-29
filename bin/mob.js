@@ -21,10 +21,15 @@ if (subcommand === 'install-hooks') {
 
   function startServer(isRestart = false) {
     const startTime = Date.now();
+    const env = { ...process.env };
+    if (process.argv.includes('--no-hooks')) {
+      env.MOB_NO_HOOKS = '1';
+    }
+
     const child = spawn(process.execPath, [serverEntry], {
       cwd: root,
       stdio: 'inherit',
-      env: { ...process.env },
+      env,
     });
 
     child.on('exit', (code) => {

@@ -2,11 +2,9 @@ import fs from 'fs';
 import path from 'path';
 import { getScrollbackDir } from './util/platform.js';
 import { SCROLLBACK_MAX_BYTES, SCROLLBACK_FLUSH_MS } from '../shared/constants.js';
+import { createLogger } from './util/logger.js';
 
-function log(...args: unknown[]) {
-  const ts = new Date().toISOString().slice(11, 23);
-  console.log(`[${ts}] [scrollback]`, ...args);
-}
+const log = createLogger('scrollback');
 
 interface BufferEntry {
   chunks: string[];
@@ -74,7 +72,7 @@ export class ScrollbackBuffer {
         fs.writeFileSync(filePath, entry.chunks.join(''), 'utf8');
         entry.dirty = false;
       } catch (err) {
-        log(`Failed to flush ${instanceId}:`, err);
+        log.error(`Failed to flush ${instanceId}:`, err);
       }
     }
   }
@@ -88,7 +86,7 @@ export class ScrollbackBuffer {
         fs.writeFileSync(filePath, entry.chunks.join(''), 'utf8');
         entry.dirty = false;
       } catch (err) {
-        log(`Failed to flush ${instanceId}:`, err);
+        log.error(`Failed to flush ${instanceId}:`, err);
       }
     }
   }

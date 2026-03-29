@@ -24,8 +24,10 @@ ensureDir(getSessionsDir());
 ensureDir(getScrollbackDir());
 
 // Auto-install Claude Code hooks so external instances are discovered
-const packageRoot = new URL('../../..', import.meta.url).pathname;
-installHooks(packageRoot, true);
+if (!process.env.MOB_NO_HOOKS) {
+  const packageRoot = new URL('../../..', import.meta.url).pathname;
+  installHooks(packageRoot, true);
+}
 
 const settingsManager = new SettingsManager();
 const ptyManager = new PtyManager();
@@ -87,3 +89,12 @@ function gracefulShutdown(done: () => void) {
 
 process.on('SIGINT', () => gracefulShutdown(() => process.exit(0)));
 process.on('SIGTERM', () => gracefulShutdown(() => process.exit(0)));
+
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+  gracefulShutdown(() => process.exit(1));
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled rejection:', reason);
+});

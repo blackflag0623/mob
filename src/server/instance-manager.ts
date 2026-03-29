@@ -71,7 +71,7 @@ export class InstanceManager extends EventEmitter {
       // Defer so the server finishes initializing first
       setTimeout(() => {
         for (const info of toResume) {
-          console.log(`[auto-resume] Resuming instance ${info.id} (${info.name}) in ${info.cwd}`);
+          this.log.info(`[auto-resume] Resuming instance ${info.id} (${info.name}) in ${info.cwd}`);
           this.resume(info.id);
         }
       }, 500);

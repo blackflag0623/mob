@@ -58,6 +58,7 @@ export class SettingsManager {
     try {
       fs.writeFileSync(tmpPath, JSON.stringify(this.settings, null, 2), 'utf-8');
       fs.renameSync(tmpPath, this.filePath);
+      try { fs.chmodSync(this.filePath, 0o600); } catch {}
     } catch (err) {
       log.error('Failed to save settings:', err);
       // Clean up tmp file if rename failed
