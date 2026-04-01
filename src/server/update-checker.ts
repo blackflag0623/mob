@@ -16,6 +16,10 @@ function getCurrentVersion(): string {
   return pkg.version;
 }
 
+export function getVersion(): string {
+  return getCurrentVersion();
+}
+
 function isNewer(latest: string, current: string): boolean {
   const a = latest.split('.').map(Number);
   const b = current.split('.').map(Number);

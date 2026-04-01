@@ -19,6 +19,7 @@ export const updateAvailable = writable<{ current: string; latest: string } | nu
 export const updateStatus = writable<'idle' | 'installing' | 'success' | 'failed'>('idle');
 export const updateError = writable<string | null>(null);
 export const launchConflicts = writable<LaunchConflicts | null>(null);
+export const serverVersion = writable<string>('');
 
 export const selectedInstance = derived(
   [instances, selectedInstanceId],
@@ -132,6 +133,9 @@ wsClient.onMessage((msg) => {
   switch (msg.type) {
     case 'snapshot':
       instances.set(new Map(msg.payload.instances.map((i) => [i.id, i])));
+      if (msg.payload.version) {
+        serverVersion.set(msg.payload.version);
+      }
       if (msg.payload.updateAvailable) {
         updateAvailable.set(msg.payload.updateAvailable);
       }

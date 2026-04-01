@@ -2,7 +2,7 @@
   import Dashboard from './components/Dashboard.svelte';
   import LaunchDialog from './components/LaunchDialog.svelte';
   import SettingsDialog from './components/SettingsDialog.svelte';
-  import { showLaunchDialog, showSettingsDialog, wsConnected, sortedInstances, visualInstances, selectedInstanceId, selectedInstance, sidebarCollapsed, errors, settings, wsClient, updateAvailable, updateStatus, updateError, groupedInstances, collapsedGroups } from './lib/stores.js';
+  import { showLaunchDialog, showSettingsDialog, wsConnected, sortedInstances, visualInstances, selectedInstanceId, selectedInstance, sidebarCollapsed, errors, settings, wsClient, updateAvailable, updateStatus, updateError, groupedInstances, collapsedGroups, serverVersion } from './lib/stores.js';
   import { matchesShortcut, formatShortcut } from './lib/shortcuts.js';
 
   const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
@@ -134,6 +134,7 @@
     <div class="logo">
       <span class="logo-text">mob</span>
       <span class="logo-sub">claude coordinator</span>
+      {#if $serverVersion}<span class="logo-version">v{$serverVersion}</span>{/if}
     </div>
     <div class="header-actions">
       <span class="connection-status" class:connected={$wsConnected}>
@@ -228,6 +229,12 @@
   .logo-sub {
     font-size: 12px;
     color: var(--text-muted);
+  }
+
+  .logo-version {
+    font-size: 11px;
+    color: var(--text-muted);
+    opacity: 0.6;
   }
 
   .header-actions {

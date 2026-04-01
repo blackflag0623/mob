@@ -5,7 +5,7 @@ import type { PtyManager } from './pty-manager.js';
 import type { ClientMessage, ServerMessage } from '../shared/protocol.js';
 import { validateLaunchPayload, validateEditPayload } from './util/sanitize.js';
 import { createLogger } from './util/logger.js';
-import { performUpdate } from './update-checker.js';
+import { performUpdate, getVersion } from './update-checker.js';
 
 const log = createLogger('ws');
 
@@ -135,7 +135,7 @@ export function createWsServer(
     log.info( `Sending snapshot to #${clientId}: ${snapshot.length} instance(s)`);
     ws.send(JSON.stringify({
       type: 'snapshot',
-      payload: { instances: snapshot, ...(updateInfo ? { updateAvailable: updateInfo } : {}) },
+      payload: { instances: snapshot, version: getVersion(), ...(updateInfo ? { updateAvailable: updateInfo } : {}) },
     } satisfies ServerMessage));
 
     ws.on('message', (raw) => {
@@ -154,7 +154,7 @@ export function createWsServer(
         case 'sync':
           ws.send(JSON.stringify({
             type: 'snapshot',
-            payload: { instances: instanceManager.getAll(), ...(updateInfo ? { updateAvailable: updateInfo } : {}) },
+            payload: { instances: instanceManager.getAll(), version: getVersion(), ...(updateInfo ? { updateAvailable: updateInfo } : {}) },
           } satisfies ServerMessage));
           break;
 

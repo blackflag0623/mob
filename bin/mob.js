@@ -9,7 +9,11 @@ const root = join(__dirname, '..');
 
 const subcommand = process.argv[2];
 
-if (subcommand === 'install-hooks') {
+if (subcommand === '--version' || subcommand === '-v') {
+  const { readFileSync } = await import('fs');
+  const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf-8'));
+  console.log(pkg.version);
+} else if (subcommand === 'install-hooks') {
   const { installHooks } = await import(join(root, 'dist', 'server', 'server', 'hooks.js'));
   installHooks(root);
 } else if (subcommand === 'uninstall-hooks') {

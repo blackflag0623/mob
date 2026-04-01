@@ -34,7 +34,7 @@ export interface InstanceEditPayload {
 
 // Server → Client messages
 export type ServerMessage =
-  | { type: 'snapshot'; payload: { instances: InstanceInfo[]; updateAvailable?: { current: string; latest: string } } }
+  | { type: 'snapshot'; payload: { instances: InstanceInfo[]; version: string; updateAvailable?: { current: string; latest: string } } }
   | { type: 'instance:update'; payload: InstanceInfo }
   | { type: 'instance:remove'; payload: { instanceId: string } }
   | { type: 'terminal:output'; payload: { instanceId: string; data: string } }
