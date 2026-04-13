@@ -52,7 +52,7 @@ case "$HOOK_EVENT" in
   "PreToolUse")   STATE="running" ;;
   "PostToolUse")  STATE="running" ;;
   "Notification") STATE="idle" ;;
-  "UserPromptSubmit") STATE="idle" ;;
+  "UserPromptSubmit") STATE="running" ;;
   *)              STATE="running" ;;
 esac
 

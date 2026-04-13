@@ -20,31 +20,48 @@ const logger = createLogger('instance-mgr');
 
 const JIRA_KEY_RE = /([A-Z][A-Z0-9]+-\d+)/;
 
-// OSC 2 = Set Window Title: \x1B]2;...title...\x07  (or \x1B\\ as terminator)
-const OSC2_RE = /\x1B\]2;([^\x07\x1B]*?)(?:\x07|\x1B\\)/;
-const OSC2_RE_GLOBAL = /\x1B\]2;([^\x07\x1B]*?)(?:\x07|\x1B\\)/g;
+/** Trivial prompts that should not become instance titles. */
+const TRIVIAL_PROMPTS = new Set([
+  'y', 'n', 'yes', 'no', 'ok', 'okay', 'sure', 'thanks', 'thank you',
+  'do it', 'go ahead', 'continue', 'proceed', 'lgtm', 'looks good',
+  'retry', 'try again', 'next', 'done', 'stop', 'cancel', 'nevermind',
+  'nvm', 'skip', 'approve', 'deny', 'accept', 'reject', 'perfect',
+  'great', 'nice', 'good', 'correct', 'right', 'exactly', 'yep', 'nope',
+]);
 
-function cleanTerminalTitle(raw: string): string | null {
-  let title = raw.trim();
-  if (title.toLowerCase().startsWith('claude:')) title = title.slice(7).trim();
-  return title || null;
+const FILLER_PREFIXES = /^(please\s+|can you\s+|could you\s+|i need you to\s+|i want you to\s+|i'd like you to\s+|go ahead and\s+|help me\s+|let's\s+|now\s+|ok\s+|okay\s+)/i;
+
+const TRAILING_STOP_WORDS = /\s+(the|a|an|in|on|at|to|for|of|with|from|and|or|but|that|this|is|are|was|were)$/i;
+
+/**
+ * Extract a 2-4 word title from a user prompt.
+ * Returns null if the prompt is trivial or too short.
+ */
+export function extractTitle(prompt: string): string | null {
+  if (!prompt) return null;
+
+  const firstLine = prompt.split('\n')[0].trim();
+  const lower = firstLine.toLowerCase().replace(/[.!?,;:]+$/, '').trim();
+  if (lower.length < 8 || TRIVIAL_PROMPTS.has(lower)) return null;
+
+  let cleaned = firstLine.replace(FILLER_PREFIXES, '').trim();
+  if (!cleaned) cleaned = firstLine;
+
+  const ARTICLES = new Set(['the', 'a', 'an']);
+  const words = cleaned.split(/\s+/).filter(w => w.length > 0 && !ARTICLES.has(w.toLowerCase()));
+  if (words.length === 0) return null;
+
+  let title = words.slice(0, 4).join(' ');
+  title = title.replace(/[.!?,;:]+$/, '');
+  title = title.replace(TRAILING_STOP_WORDS, '');
+
+  // Capitalize first letter only
+  title = title.charAt(0).toUpperCase() + title.slice(1);
+
+  if (title.length < 3) return null;
+  return title;
 }
 
-function extractTerminalTitle(data: string): string | null {
-  const match = data.match(OSC2_RE);
-  if (!match) return null;
-  return cleanTerminalTitle(match[1]);
-}
-
-function extractLastTerminalTitle(data: string): string | null {
-  let last: string | null = null;
-  let match;
-  while ((match = OSC2_RE_GLOBAL.exec(data)) !== null) {
-    const title = cleanTerminalTitle(match[1]);
-    if (title) last = title;
-  }
-  return last;
-}
 
 export function extractJiraKey(branch: string | undefined): string | null {
   if (!branch) return null;
@@ -124,18 +141,9 @@ export class InstanceManager extends EventEmitter {
     this.ptyManager.on('data', (instanceId: string, data: string) => {
       this.scrollbackBuffer.append(instanceId, data);
 
-      // Capture terminal title (OSC 2) set by Claude via printf '\e]2;...\a'
-      if (this.autoNameIds.has(instanceId) && data.includes('\x1B]2;')) {
-        const title = extractTerminalTitle(data);
-        if (title) {
-          const info = this.instances.get(instanceId);
-          if (info && info.name !== title) {
-            info.name = title;
-            info.lastUpdated = Date.now();
-            this.emit('update', info);
-          }
-        }
-      }
+      // Track terminal title (OSC 2) for periodic refresh, but don't use for
+      // auto-naming — OSC 2 titles are tool-level status strings like "Bash:start"
+      // which change too rapidly and aren't meaningful task descriptions.
     });
 
     this.ptyManager.on('exit', (instanceId: string, exitCode: number) => {
@@ -472,9 +480,14 @@ export class InstanceManager extends EventEmitter {
   handleHookUpdate(data: InstanceStatusFile): void {
     const existing = this.instances.get(data.id);
 
-    // Notification events don't reliably indicate "needs input" — Claude fires them for
-    // completion messages too. Verify via terminal output for managed instances.
-    if (data.hookEvent === 'Notification') {
+    // --- Hook-event state refinement ---
+
+    // PreToolUse with AskUserQuestion: Claude is about to ask a question.
+    if (data.hookEvent === 'PreToolUse' && data.currentTool === 'AskUserQuestion') {
+      data.state = 'waiting';
+    }
+    // Notification: Claude finished its turn. Check terminal to distinguish idle vs waiting.
+    else if (data.hookEvent === 'Notification') {
       if (this.managedIds.has(data.id)) {
         const tail = this.scrollbackBuffer.getTail(data.id, 500);
         const detected = detectStateFromTerminal(tail);
@@ -482,11 +495,24 @@ export class InstanceManager extends EventEmitter {
           this.log.info(`Notification for ${data.id} — terminal confirms waiting`);
           data.state = 'waiting';
         } else {
-          this.log.info(`Notification for ${data.id} — terminal does not confirm waiting, keeping ${existing?.state || 'idle'}`);
-          data.state = existing?.state || 'idle';
+          this.log.info(`Notification for ${data.id} — terminal says ${detected || 'unknown'}, defaulting to idle`);
+          data.state = 'idle';
         }
       } else {
-        data.state = existing?.state || 'idle';
+        data.state = 'idle';
+      }
+    }
+    // Stop: Claude's turn ended (user interrupt or natural). Check terminal for waiting.
+    else if (data.hookEvent === 'Stop') {
+      if (this.managedIds.has(data.id)) {
+        const tail = this.scrollbackBuffer.getTail(data.id, 500);
+        const detected = detectStateFromTerminal(tail);
+        if (detected === 'waiting') {
+          this.log.info(`Stop for ${data.id} — terminal confirms waiting`);
+          data.state = 'waiting';
+        } else {
+          data.state = 'idle';
+        }
       }
     }
 
@@ -499,23 +525,20 @@ export class InstanceManager extends EventEmitter {
         return;
       }
     }
-    // Auto-name: use topic or subtask, refreshing every 5 prompts
+    // Auto-name: derive short title from prompt, or use subtask
     let name = existing?.name || data.id;
     if (this.autoNameIds.has(data.id)) {
-      const autoName = data.subtask || data.topic;
-      if (autoName) {
-        // Track prompt count — topic is set on UserPromptSubmit events
-        if (data.topic) {
-          const count = (this.promptCount.get(data.id) || 0) + 1;
-          this.promptCount.set(data.id, count);
-          // Rename on first prompt and every 5 prompts after
-          if (count === 1 || count % 5 === 0) {
-            name = autoName;
-          }
-        } else {
-          // subtask update without a prompt — always use it
-          name = autoName;
+      if (data.subtask) {
+        // Subtask from .mob-task.json always takes priority
+        name = data.subtask;
+      } else if (data.topic) {
+        const count = (this.promptCount.get(data.id) || 0) + 1;
+        this.promptCount.set(data.id, count);
+        const title = extractTitle(data.topic);
+        if (title && title !== existing?.name) {
+          name = title;
         }
+        // If extractTitle returned null (trivial prompt), keep existing name
       }
     }
 
@@ -606,17 +629,7 @@ export class InstanceManager extends EventEmitter {
           }
         }
 
-        // Periodic title refresh from scrollback (~every 3 min)
-        if (this.autoNameIds.has(id) && this.staleCheckCycle % 18 === 0) {
-          const tail = this.scrollbackBuffer.getTail(id, 2000);
-          const title = extractLastTerminalTitle(tail);
-          if (title && title !== info.name) {
-            this.log.info(`title refresh: ${id} "${info.name}" → "${title}"`);
-            info.name = title;
-            info.lastUpdated = now;
-            this.emit('update', info);
-          }
-        }
+        // (OSC 2 title refresh removed — those are tool-status strings, not task names)
 
         // Terminal-based state fallback for managed instances
         if (this.managedIds.has(id)) {

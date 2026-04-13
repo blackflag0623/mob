@@ -207,9 +207,14 @@
 
   onMount(() => {
     unsubMessage = wsClient.onMessage((msg) => {
-      if (msg.type === 'terminal:output' && msg.payload.instanceId === currentSubscription) {
-        terminal?.write(msg.payload.data);
-        scrollToBottomIfNeeded();
+      if (msg.type === 'terminal:output' && msg.payload.instanceId === currentSubscription && terminal) {
+        const wasAtBottom = isAtBottom;
+        const savedY = terminal.buffer.active.viewportY;
+        terminal.write(msg.payload.data);
+        if (!wasAtBottom) {
+          terminal.scrollToLine(savedY);
+          isAtBottom = false;
+        }
       }
       if (msg.type === 'terminal:scrollback' && msg.payload.instanceId === currentSubscription) {
         terminal?.write(msg.payload.data);

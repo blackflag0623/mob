@@ -67,7 +67,7 @@ $State = switch ($HookEvent) {
     "PreToolUse"   { "running" }
     "PostToolUse"  { "running" }
     "Notification" { "idle" }
-    "UserPromptSubmit" { "idle" }
+    "UserPromptSubmit" { "running" }
     default        { "running" }
 }
 Log "State=$State"
