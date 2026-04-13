@@ -16,6 +16,11 @@
   let editModel = '';
   let editPermissionMode = '';
 
+  // Inline rename state
+  let renaming = false;
+  let renameName = '';
+  let renameInput: HTMLInputElement;
+
   function select() {
     selectedInstanceId.set(instance.id);
   }
@@ -53,6 +58,27 @@
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEdit(e); }
   }
 
+  function startRename(e: Event) {
+    e.stopPropagation();
+    renameName = instance.name;
+    renaming = true;
+    // Focus the input after Svelte renders it
+    requestAnimationFrame(() => renameInput?.select());
+  }
+
+  function saveRename() {
+    renaming = false;
+    const trimmed = renameName.trim();
+    if (trimmed && trimmed !== instance.name) {
+      wsClient.send({ type: 'instance:edit', payload: { instanceId: instance.id, name: trimmed } });
+    }
+  }
+
+  function handleRenameKeydown(e: KeyboardEvent) {
+    if (e.key === 'Escape') { e.stopPropagation(); renaming = false; }
+    if (e.key === 'Enter') { e.stopPropagation(); saveRename(); }
+  }
+
   function kill(e: Event) {
     e.stopPropagation();
     if (confirm(`Kill instance "${instance.name}"?`)) {
@@ -80,7 +106,14 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div class="card" class:selected class:needs-input={needsInput} on:click={select} on:mousedown|preventDefault role="button" tabindex="-1" on:keypress={select}>
   <div class="card-header">
-    <span class="name">{instance.name}</span>
+    {#if renaming}
+      <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
+      <input class="rename-input" type="text" bind:value={renameName} bind:this={renameInput}
+             on:keydown={handleRenameKeydown} on:blur={saveRename}
+             on:click|stopPropagation on:mousedown|stopPropagation />
+    {:else}
+      <span class="name" on:dblclick={startRename} title="Double-click to rename">{instance.name}</span>
+    {/if}
     <div class="header-right">
       {#if instance.managed && !editing}
         <button class="edit-btn" on:click={startEdit} title="Edit instance settings">
@@ -254,6 +287,21 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    cursor: text;
+  }
+
+  .rename-input {
+    font-weight: 600;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 0 4px;
+    outline: none;
+    min-width: 0;
+    flex: 1;
   }
 
   .edit-panel {

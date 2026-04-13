@@ -1,4 +1,4 @@
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -9,7 +9,17 @@ const SEMVER_RE = /^\d+\.\d+\.\d+(-[\w.]+)?$/;
 const log = createLogger('update');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const packageRoot = join(__dirname, '..', '..');
+
+function findPackageRoot(): string {
+  let dir = __dirname;
+  for (let i = 0; i < 5; i++) {
+    if (existsSync(join(dir, 'package.json'))) return dir;
+    dir = dirname(dir);
+  }
+  return join(__dirname, '..', '..');
+}
+
+const packageRoot = findPackageRoot();
 
 function getCurrentVersion(): string {
   const pkg = JSON.parse(readFileSync(join(packageRoot, 'package.json'), 'utf-8'));

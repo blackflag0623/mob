@@ -176,6 +176,24 @@ export function createApp(instanceManager: InstanceManager, settingsManager: Set
     res.json(info);
   });
 
+  // REST: edit instance (name, project, model, permissionMode)
+  app.patch('/api/instances/:id', (req, res) => {
+    const fields: Record<string, string> = {};
+    for (const key of ['name', 'project', 'model', 'permissionMode']) {
+      if (typeof req.body[key] === 'string') fields[key] = req.body[key];
+    }
+    if (Object.keys(fields).length === 0) {
+      res.status(400).json({ error: 'No valid fields provided' });
+      return;
+    }
+    const ok = instanceManager.editInstance(req.params.id, fields);
+    if (!ok) {
+      res.status(404).json({ error: 'Instance not found' });
+      return;
+    }
+    res.json(instanceManager.get(req.params.id));
+  });
+
   // Fallback to index.html for SPA routing (production only)
   if (hasBuiltClient) {
     app.get('*', (_req, res) => {
