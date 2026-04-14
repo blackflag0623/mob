@@ -37,11 +37,18 @@ export function getScrollbackDir(): string {
   return path.join(getMobDir(), 'scrollback');
 }
 
-/** Resolve ~ and normalize a path for comparison. */
+/** Resolve ~, MSYS paths, and normalize a path for comparison. */
 export function resolvePath(p: string): string {
   let resolved = p;
   if (resolved.startsWith('~/') || resolved === '~') {
     resolved = os.homedir() + resolved.slice(1);
+  }
+  // Convert MSYS/Git Bash paths (/e/Development → E:\Development)
+  if (process.platform === 'win32') {
+    const msysMatch = resolved.match(/^\/([a-zA-Z])(\/.*)?$/);
+    if (msysMatch) {
+      resolved = msysMatch[1].toUpperCase() + ':' + (msysMatch[2] || '\\').replace(/\//g, '\\');
+    }
   }
   return path.resolve(resolved);
 }

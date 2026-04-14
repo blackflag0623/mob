@@ -36,7 +36,8 @@ export function isValidCwd(s: string): boolean {
   if (!s || s.length > 1024) return false;
   if (s.includes('\0')) return false;
   // Must be absolute path or start with ~
-  return s.startsWith('/') || s.startsWith('~');
+  // On Windows, also accept drive letter paths (e.g. E:\Development, E:/Development)
+  return s.startsWith('/') || s.startsWith('~') || /^[a-zA-Z]:[/\\]/.test(s);
 }
 
 export function isValidName(s: string): boolean {

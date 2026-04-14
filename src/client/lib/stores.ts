@@ -8,7 +8,12 @@ import { requestNotificationPermission, checkWaitingNotification, clearInstanceS
 
 export const wsClient = new WsClient();
 export const instances = writable<Map<string, InstanceInfo>>(new Map());
-export const selectedInstanceId = writable<string | null>(null);
+const _storedInstanceId = sessionStorage.getItem('mob:selectedInstanceId');
+export const selectedInstanceId = writable<string | null>(_storedInstanceId);
+selectedInstanceId.subscribe((id) => {
+  if (id) sessionStorage.setItem('mob:selectedInstanceId', id);
+  else sessionStorage.removeItem('mob:selectedInstanceId');
+});
 export const wsConnected = writable(false);
 export const showLaunchDialog = writable(false);
 export const showSettingsDialog = writable(false);
@@ -131,15 +136,22 @@ export function onInstanceRemove(handler: InstanceRemoveHandler): () => void {
 
 wsClient.onMessage((msg) => {
   switch (msg.type) {
-    case 'snapshot':
-      instances.set(new Map(msg.payload.instances.map((i) => [i.id, i])));
+    case 'snapshot': {
+      const map = new Map(msg.payload.instances.map((i) => [i.id, i]));
+      instances.set(map);
       if (msg.payload.version) {
         serverVersion.set(msg.payload.version);
       }
       if (msg.payload.updateAvailable) {
         updateAvailable.set(msg.payload.updateAvailable);
       }
+      // Clear restored selectedInstanceId if it no longer exists in the snapshot
+      const currentId = get(selectedInstanceId);
+      if (currentId && !map.has(currentId)) {
+        selectedInstanceId.set(null);
+      }
       break;
+    }
     case 'instance:update':
       instances.update((map) => {
         map.set(msg.payload.id, msg.payload);

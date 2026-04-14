@@ -17,8 +17,15 @@ function expandHome(p: string): string {
   if (resolved.startsWith('~/') || resolved === '~') {
     resolved = os.homedir() + resolved.slice(1);
   }
+  // Convert MSYS/Git Bash paths (/e/Development → E:\Development)
+  if (process.platform === 'win32') {
+    const msysMatch = resolved.match(/^\/([a-zA-Z])(\/.*)?$/);
+    if (msysMatch) {
+      resolved = msysMatch[1].toUpperCase() + ':' + (msysMatch[2] || '\\').replace(/\//g, '\\');
+    }
+  }
   // Strip trailing slash (node-pty can choke on it)
-  if (resolved.length > 1 && resolved.endsWith('/')) {
+  if (resolved.length > 1 && (resolved.endsWith('/') || resolved.endsWith('\\'))) {
     resolved = resolved.slice(0, -1);
   }
   return resolved;

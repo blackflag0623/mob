@@ -297,6 +297,10 @@
   $: {
     const connected = $wsConnected;
     if (connected && !prevConnected && currentSubscription) {
+      // Clear terminal before replaying scrollback to avoid doubled/corrupted output
+      if (terminal) {
+        terminal.clear();
+      }
       wsClient.send({ type: 'terminal:subscribe', payload: { instanceId: currentSubscription } });
     }
     prevConnected = connected;

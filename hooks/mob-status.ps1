@@ -99,6 +99,8 @@ if (Test-Path $TaskFile) {
 
 $Timestamp = [long](Get-Date -UFormat %s) * 1000
 
+$ClaudeSessionId = if ($Data.session_id) { "$($Data.session_id)" } else { "$InstanceId" }
+
 $Status = @{
     id = $InstanceId
     cwd = "$Cwd"
@@ -110,7 +112,7 @@ $Status = @{
     subtask = "$Subtask"
     currentTool = "$ToolName"
     lastUpdated = $Timestamp
-    sessionId = "$InstanceId"
+    sessionId = "$ClaudeSessionId"
     topic = "$Topic"
 }
 if ($null -ne $Progress) { $Status.progress = $Progress }

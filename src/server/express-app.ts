@@ -6,7 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import type { InstanceManager } from './instance-manager.js';
 import type { SettingsManager } from './settings-manager.js';
-import { isPathWithinHome, shellQuote, validateHookPayload } from './util/sanitize.js';
+import { shellQuote, validateHookPayload } from './util/sanitize.js';
 import { createLogger } from './util/logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -31,7 +31,7 @@ export function createApp(instanceManager: InstanceManager, settingsManager: Set
     app.use(express.static(clientDir));
   }
 
-  // Directory autocomplete for launch dialog (restricted to home directory)
+  // Directory autocomplete for launch dialog
   app.get('/api/completions/dirs', (req, res) => {
     const partial = (req.query.q as string) || '';
     if (!partial) {
@@ -41,26 +41,23 @@ export function createApp(instanceManager: InstanceManager, settingsManager: Set
 
     // Expand ~ to home dir
     const home = os.homedir();
-    const expanded = partial.startsWith('~')
+    let expanded = partial.startsWith('~')
       ? path.join(home, partial.slice(1))
       : partial;
 
-    // Restrict to home directory tree
-    const resolved = path.resolve(expanded);
-    if (!isPathWithinHome(resolved)) {
-      res.json([]);
-      return;
+    // Convert MSYS/Git Bash paths (/e/Development → E:\Development)
+    if (process.platform === 'win32') {
+      const msysMatch = expanded.match(/^\/([a-zA-Z])(\/.*)?$/);
+      if (msysMatch) {
+        expanded = msysMatch[1].toUpperCase() + ':' + (msysMatch[2] || '\\').replace(/\//g, '\\');
+      }
     }
 
-    const dir = expanded.endsWith('/') ? expanded : path.dirname(expanded);
-    const prefix = expanded.endsWith('/') ? '' : path.basename(expanded);
+    const endsWithSep = expanded.endsWith('/') || expanded.endsWith('\\');
+    const dir = endsWithSep ? expanded : path.dirname(expanded);
+    const prefix = endsWithSep ? '' : path.basename(expanded);
 
-    // Verify dir is also within home
     const resolvedDir = path.resolve(dir);
-    if (!isPathWithinHome(resolvedDir)) {
-      res.json([]);
-      return;
-    }
 
     try {
       const entries = fs.readdirSync(resolvedDir, { withFileTypes: true });
@@ -69,7 +66,7 @@ export function createApp(instanceManager: InstanceManager, settingsManager: Set
         .slice(0, 20)
         .map((e) => {
           const full = path.join(resolvedDir, e.name);
-          const display = full.startsWith(home) ? '~' + full.slice(home.length) : full;
+          const display = full.startsWith(home) ? '~' + full.slice(home.length).replace(/\\/g, '/') : full.replace(/\\/g, '/');
           return { path: full, display: display + '/' };
         });
       res.json(matches);
