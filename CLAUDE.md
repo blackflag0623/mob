@@ -24,13 +24,16 @@ Mob is a local web dashboard that coordinates multiple Claude Code CLI sessions.
 - `pty-manager.ts` spawns shells via node-pty, injects `MOB_INSTANCE_ID` env var, then writes the `claude` command into the shell after 500ms. Emits `data` and `exit` events.
 - `discovery.ts` watches `~/.mob/instances/*.json` with chokidar for external Claude instances reporting via hook scripts.
 - `ws-server.ts` routes WebSocket messages and manages per-instance terminal subscriptions (`Map<instanceId, Set<WebSocket>>`). Terminal output only goes to subscribed clients.
-- `express-app.ts` serves REST API (`/api/instances`, `/api/hook`, `/api/completions/dirs`) and static frontend in production.
+- `express-app.ts` serves REST API (`/api/instances`, `/api/hook`, `/api/completions/dirs`, `/api/instances/:id/files`) and static frontend in production.
+- `file-system-service.ts` provides file tree listing and content reading for the file explorer, with path traversal protection, 5MB size limit, and chokidar-based file watching (ref-counted per viewer) that pushes `files:changed` via WebSocket for live content updates.
 
 **Client** (`src/client/`) — Svelte 5 app with xterm.js:
 - `lib/stores.ts` holds reactive state wired to the WebSocket — `instances` Map auto-updates from server messages.
 - `lib/ws-client.ts` connects to `/mob-ws` with exponential backoff reconnect.
 - Components use Svelte 4 legacy syntax (`on:click`, `export let`, `$:`, `$store`). The `compatibility.componentApi: 4` flag is set in `svelte.config.js`.
 - `TerminalPanel.svelte` caches xterm Terminal instances per-instance for fast switching.
+- `Dashboard.svelte` provides Terminal/Files tab switching. TerminalPanel stays mounted (CSS hidden) when switching to Files to preserve xterm state.
+- `FileExplorerPanel.svelte` is the file browser: left tree panel + right content viewer. `FileTree.svelte` uses `svelte:self` for recursive rendering with lazy-loaded subdirectories. `FileViewer.svelte` displays file content with Shiki syntax highlighting (VS Code TextMate grammars, github-dark theme, languages loaded on demand via WASM).
 
 ## Data Flow
 
@@ -39,6 +42,8 @@ Mob is a local web dashboard that coordinates multiple Claude Code CLI sessions.
 **Terminal I/O:** xterm `onData` → WS `terminal:input` → PtyManager writes to PTY stdin → PTY emits data → WS `terminal:output` → only subscribed clients receive it.
 
 **External instance discovery:** Hook script writes JSON to `~/.mob/instances/{id}.json` and/or POSTs to `/api/hook` → DiscoveryService or Express route → InstanceManager merges into instance map → broadcasts update.
+
+**File browsing:** Client switches to Files tab → REST `GET /api/instances/:id/files?path=` returns directory listing → FileTree renders entries, expands subdirectories lazily. Clicking a file → REST `GET /api/instances/:id/files/content?path=` returns content → FileViewer highlights with Shiki. Client sends WS `files:watch` for the viewed file → server watches with chokidar → on change pushes WS `files:changed` → client re-fetches content.
 
 ## Key Design Details
 
