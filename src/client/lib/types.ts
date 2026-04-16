@@ -1,1 +1,1 @@
-export type { InstanceInfo, InstanceState, InstanceEditPayload, LaunchConflicts, LaunchPayload, ClientMessage, ServerMessage } from '../../shared/protocol.js';
+export type { InstanceInfo, InstanceState, InstanceEditPayload, LaunchConflicts, LaunchPayload, ClientMessage, ServerMessage, FileEntry } from '../../shared/protocol.js';

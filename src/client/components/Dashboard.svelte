@@ -1,7 +1,8 @@
 <script lang="ts">
   import InstanceList from './InstanceList.svelte';
   import TerminalPanel from './TerminalPanel.svelte';
-  import { selectedInstance, selectedInstanceId, sidebarCollapsed, visualInstances, selectedInCollapsedGroup } from '../lib/stores.js';
+  import FileExplorerPanel from './FileExplorerPanel.svelte';
+  import { selectedInstance, selectedInstanceId, sidebarCollapsed, visualInstances, selectedInCollapsedGroup, activeMainTab } from '../lib/stores.js';
 
   let toast: { name: string; branch?: string; cwd: string } | null = null;
   let toastKey = 0;
@@ -47,6 +48,10 @@
     </button>
   </aside>
   <main class="main-area">
+    <div class="tab-bar">
+      <button class="tab" class:active={$activeMainTab === 'terminal'} on:click={() => activeMainTab.set('terminal')}>Terminal</button>
+      <button class="tab" class:active={$activeMainTab === 'files'} on:click={() => activeMainTab.set('files')}>Files</button>
+    </div>
     {#if toast}
       {#key toastKey}
         <div class="instance-toast">
@@ -58,7 +63,16 @@
         </div>
       {/key}
     {/if}
-    <TerminalPanel />
+    <div class="tab-content">
+      <div class="tab-pane" class:hidden={$activeMainTab !== 'terminal'}>
+        <TerminalPanel />
+      </div>
+      {#if $activeMainTab === 'files'}
+        <div class="tab-pane">
+          <FileExplorerPanel />
+        </div>
+      {/if}
+    </div>
   </main>
 </div>
 
@@ -182,6 +196,48 @@
     flex-direction: column;
     overflow: hidden;
     position: relative;
+  }
+
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    padding: 6px 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+    flex-shrink: 0;
+  }
+
+  .tab {
+    padding: 4px 14px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .tab:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+  .tab.active { background: var(--accent); color: white; }
+
+  .tab-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tab-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .tab-pane.hidden {
+    display: none;
   }
 
   .instance-toast {

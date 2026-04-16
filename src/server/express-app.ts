@@ -6,6 +6,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import type { InstanceManager } from './instance-manager.js';
 import type { SettingsManager } from './settings-manager.js';
+import { FileSystemService } from './file-system-service.js';
 import { shellQuote, validateHookPayload } from './util/sanitize.js';
 import { createLogger } from './util/logger.js';
 
@@ -15,6 +16,7 @@ const log = createLogger('http');
 export function createApp(instanceManager: InstanceManager, settingsManager: SettingsManager): express.Application {
   const app = express();
   app.use(express.json());
+  const fileSystemService = new FileSystemService(instanceManager);
 
   // Request logging for API routes
   app.use('/api', (req, _res, next) => {
@@ -189,6 +191,37 @@ export function createApp(instanceManager: InstanceManager, settingsManager: Set
       return;
     }
     res.json(instanceManager.get(req.params.id));
+  });
+
+  // REST: file tree
+  app.get('/api/instances/:id/files', async (req, res) => {
+    try {
+      const entries = await fileSystemService.getFileTree(req.params.id, (req.query.path as string) || '');
+      res.json({ entries });
+    } catch (err: any) {
+      const msg = err.message || '';
+      if (msg === 'Instance not found') { res.status(404).json({ error: msg }); return; }
+      if (msg === 'Path outside working directory') { res.status(403).json({ error: 'Access denied' }); return; }
+      log.error('File tree error:', err);
+      res.status(500).json({ error: 'Failed to read directory' });
+    }
+  });
+
+  // REST: file content
+  app.get('/api/instances/:id/files/content', async (req, res) => {
+    try {
+      const filePath = req.query.path as string;
+      if (!filePath) { res.status(400).json({ error: 'File path required' }); return; }
+      const result = await fileSystemService.readFileContent(req.params.id, filePath);
+      res.json(result);
+    } catch (err: any) {
+      const msg = err.message || '';
+      if (msg === 'Instance not found') { res.status(404).json({ error: msg }); return; }
+      if (msg === 'Path outside working directory') { res.status(403).json({ error: 'Access denied' }); return; }
+      if (msg.includes('too large')) { res.status(413).json({ error: msg }); return; }
+      log.error('File content error:', err);
+      res.status(500).json({ error: 'Failed to read file' });
+    }
   });
 
   // Fallback to index.html for SPA routing (production only)

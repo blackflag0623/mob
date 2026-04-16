@@ -83,3 +83,11 @@ export interface InstanceInfo {
 }
 
 export type InstanceState = 'launching' | 'running' | 'idle' | 'waiting' | 'stopped';
+
+export interface FileEntry {
+  name: string;
+  path: string;
+  type: 'file' | 'directory';
+  size?: number;
+  mtime?: number;
+}

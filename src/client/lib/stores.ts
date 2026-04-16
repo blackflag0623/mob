@@ -1,5 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
-import type { InstanceInfo, LaunchConflicts } from './types.js';
+import type { InstanceInfo, LaunchConflicts, FileEntry } from './types.js';
 import type { Settings } from '../../shared/settings.js';
 import { DEFAULT_SETTINGS } from '../../shared/settings.js';
 import { WsClient } from './ws-client.js';
@@ -25,6 +25,23 @@ export const updateStatus = writable<'idle' | 'installing' | 'success' | 'failed
 export const updateError = writable<string | null>(null);
 export const launchConflicts = writable<LaunchConflicts | null>(null);
 export const serverVersion = writable<string>('');
+
+// File explorer state
+export const activeMainTab = writable<'terminal' | 'files'>('terminal');
+export const fileTreeCache = writable<Map<string, FileEntry[]>>(new Map());
+export const selectedFile = writable<{ instanceId: string; path: string } | null>(null);
+export const fileContent = writable<{ path: string; content: string; language?: string } | null>(null);
+export const expandedDirs = writable<Set<string>>(new Set());
+export const fileTreeLoading = writable(false);
+export const fileContentLoading = writable(false);
+
+// Reset file explorer when instance changes
+selectedInstanceId.subscribe(() => {
+  selectedFile.set(null);
+  fileContent.set(null);
+  expandedDirs.set(new Set());
+  fileTreeCache.set(new Map());
+});
 
 export const selectedInstance = derived(
   [instances, selectedInstanceId],

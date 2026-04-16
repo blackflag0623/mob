@@ -48,3 +48,6 @@ Mob is a local web dashboard that coordinates multiple Claude Code CLI sessions.
 - `~` paths from the frontend are expanded server-side via `os.homedir()` in pty-manager.
 - Instances with `autoName: true` get renamed when the first `subtask` arrives via hook update.
 - Stale detection: instances with no update for 30s get marked `stale` (checked every 10s).
+
+===========================================
+ALWAYS RESPOND USE CHINESE!!!
