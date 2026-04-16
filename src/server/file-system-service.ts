@@ -162,6 +162,7 @@ export class FileSystemService {
       '.js': 'javascript', '.mjs': 'javascript', '.cjs': 'javascript',
       '.ts': 'typescript', '.mts': 'typescript',
       '.jsx': 'javascript', '.tsx': 'typescript',
+      '.cs': 'csharp',
       '.py': 'python', '.java': 'java', '.go': 'go',
       '.rs': 'rust', '.cpp': 'cpp', '.c': 'c', '.h': 'c',
       '.css': 'css', '.scss': 'scss', '.less': 'less',

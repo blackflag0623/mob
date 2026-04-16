@@ -1,8 +1,23 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { selectedFile, fileContent, fileContentLoading, fileChanged, wsClient } from '../lib/stores.js';
+  import { createHighlighter, type Highlighter } from 'shiki';
 
   let prevWatch: { instanceId: string; path: string } | null = null;
+  let highlightedHtml = '';
+  let highlighter: Highlighter | null = null;
+
+  const THEME = 'github-dark';
+
+  // Initialize shiki lazily on first use
+  async function getHighlighter(lang: string): Promise<Highlighter> {
+    if (!highlighter) {
+      highlighter = await createHighlighter({ themes: [THEME], langs: [lang] });
+    } else {
+      await highlighter.loadLanguage(lang as any);
+    }
+    return highlighter;
+  }
 
   $: if ($selectedFile) {
     const same = prevWatch && prevWatch.instanceId === $selectedFile.instanceId && prevWatch.path === $selectedFile.path;
@@ -28,6 +43,10 @@
     if (prevWatch) {
       wsClient.send({ type: 'files:unwatch', payload: { instanceId: prevWatch.instanceId, filePath: prevWatch.path } });
     }
+    if (highlighter) {
+      highlighter.dispose();
+      highlighter = null;
+    }
   });
 
   async function loadContent(instanceId: string, filePath: string) {
@@ -39,11 +58,28 @@
         throw new Error(data.error || 'Failed to load file');
       }
       const data = await res.json();
+      // Guard against stale response if user switched files during fetch
+      if (prevWatch?.instanceId !== instanceId || prevWatch?.path !== filePath) return;
       fileContent.set({ path: filePath, content: data.content, language: data.language });
+      highlightedHtml = await buildHighlightedHtml(data.content, data.language);
+      // Guard again after async highlight
+      if (prevWatch?.instanceId !== instanceId || prevWatch?.path !== filePath) return;
     } catch (e: any) {
+      if (prevWatch?.instanceId !== instanceId || prevWatch?.path !== filePath) return;
       fileContent.set({ path: filePath, content: `Error: ${e.message}`, language: undefined });
+      highlightedHtml = '';
     } finally {
       fileContentLoading.set(false);
+    }
+  }
+
+  async function buildHighlightedHtml(content: string, language?: string): Promise<string> {
+    if (!language) return '';
+    try {
+      const hl = await getHighlighter(language);
+      return hl.codeToHtml(content, { lang: language, theme: THEME });
+    } catch {
+      return '';
     }
   }
 </script>
@@ -59,7 +95,11 @@
       {/if}
     </div>
     <div class="content-wrapper">
-      <pre class="code"><code>{$fileContent.content}</code></pre>
+      {#if highlightedHtml}
+        <div class="shiki-wrapper">{@html highlightedHtml}</div>
+      {:else}
+        <pre class="code"><code>{$fileContent.content}</code></pre>
+      {/if}
     </div>
   {/if}
 </div>
@@ -104,6 +144,16 @@
   .content-wrapper {
     flex: 1;
     overflow: auto;
+  }
+
+  .shiki-wrapper :global(pre.shiki) {
+    margin: 0;
+    padding: 12px 16px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    tab-size: 2;
+    overflow-x: auto;
   }
 
   .code {
