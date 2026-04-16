@@ -1,9 +1,34 @@
 <script lang="ts">
-  import { selectedFile, fileContent, fileContentLoading } from '../lib/stores.js';
+  import { onDestroy } from 'svelte';
+  import { selectedFile, fileContent, fileContentLoading, fileChanged, wsClient } from '../lib/stores.js';
+
+  let prevWatch: { instanceId: string; path: string } | null = null;
 
   $: if ($selectedFile) {
-    loadContent($selectedFile.instanceId, $selectedFile.path);
+    const same = prevWatch && prevWatch.instanceId === $selectedFile.instanceId && prevWatch.path === $selectedFile.path;
+    if (!same) {
+      if (prevWatch) {
+        wsClient.send({ type: 'files:unwatch', payload: { instanceId: prevWatch.instanceId, filePath: prevWatch.path } });
+      }
+      wsClient.send({ type: 'files:watch', payload: { instanceId: $selectedFile.instanceId, filePath: $selectedFile.path } });
+      prevWatch = { ...$selectedFile };
+      loadContent($selectedFile.instanceId, $selectedFile.path);
+    }
   }
+
+  // React to file change notifications
+  $: if ($fileChanged && $selectedFile &&
+    $fileChanged.instanceId === $selectedFile.instanceId &&
+    $fileChanged.filePath === $selectedFile.path) {
+    loadContent($selectedFile.instanceId, $selectedFile.path);
+    fileChanged.set(null);
+  }
+
+  onDestroy(() => {
+    if (prevWatch) {
+      wsClient.send({ type: 'files:unwatch', payload: { instanceId: prevWatch.instanceId, filePath: prevWatch.path } });
+    }
+  });
 
   async function loadContent(instanceId: string, filePath: string) {
     fileContentLoading.set(true);

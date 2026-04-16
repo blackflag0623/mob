@@ -2,6 +2,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import type { Server } from 'http';
 import type { InstanceManager } from './instance-manager.js';
 import type { PtyManager } from './pty-manager.js';
+import type { FileSystemService } from './file-system-service.js';
 import type { ClientMessage, ServerMessage } from '../shared/protocol.js';
 import { validateLaunchPayload, validateEditPayload } from './util/sanitize.js';
 import { createLogger } from './util/logger.js';
@@ -19,6 +20,7 @@ export function createWsServer(
   server: Server,
   instanceManager: InstanceManager,
   ptyManager: PtyManager,
+  fileSystemService: FileSystemService,
 ): WsServerHandle {
   const wss = new WebSocketServer({
     server,
@@ -37,6 +39,23 @@ export function createWsServer(
   let updateInfo: { current: string; latest: string } | null = null;
   let restartCallback: (() => void) | null = null;
   let isUpdating = false;
+
+  // Track which files each WS client is watching: ws → Set<"instanceId:filePath">
+  const clientFileWatches = new Map<WebSocket, Set<string>>();
+
+  // Forward file change events to watching clients
+  fileSystemService.onFileChange((instanceId, filePath) => {
+    const key = `${instanceId}:${filePath}`;
+    const msg = JSON.stringify({
+      type: 'files:changed',
+      payload: { instanceId, filePath },
+    } satisfies ServerMessage);
+    for (const [client, watches] of clientFileWatches) {
+      if (watches.has(key) && client.readyState === WebSocket.OPEN) {
+        client.send(msg);
+      }
+    }
+  });
 
   log.info( 'WebSocket server created on path /mob-ws');
 
@@ -330,6 +349,25 @@ export function createWsServer(
           break;
         }
 
+        case 'files:watch': {
+          const { instanceId: watchInstId, filePath: watchPath } = msg.payload;
+          fileSystemService.watchFile(watchInstId, watchPath);
+          let watches = clientFileWatches.get(ws);
+          if (!watches) { watches = new Set(); clientFileWatches.set(ws, watches); }
+          watches.add(`${watchInstId}:${watchPath}`);
+          break;
+        }
+
+        case 'files:unwatch': {
+          const { instanceId: unwatchInstId, filePath: unwatchPath } = msg.payload;
+          const unwatchKey = `${unwatchInstId}:${unwatchPath}`;
+          const clientWatches = clientFileWatches.get(ws);
+          if (clientWatches?.delete(unwatchKey)) {
+            fileSystemService.unwatchFile(unwatchInstId, unwatchPath);
+          }
+          break;
+        }
+
         default:
           log.warn( `Client #${clientId}: unknown message type: ${(msg as any).type}`);
           ws.send(JSON.stringify({
@@ -343,6 +381,15 @@ export function createWsServer(
       log.info( `Client #${clientId} disconnected (code=${code})`);
       for (const subs of instanceManager.subscribers.values()) {
         subs.delete(ws);
+      }
+      // Clean up file watchers for this client
+      const watches = clientFileWatches.get(ws);
+      if (watches) {
+        for (const key of watches) {
+          const sep = key.indexOf(':');
+          fileSystemService.unwatchFile(key.slice(0, sep), key.slice(sep + 1));
+        }
+        clientFileWatches.delete(ws);
       }
     });
 

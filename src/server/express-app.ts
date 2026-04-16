@@ -6,17 +6,16 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import type { InstanceManager } from './instance-manager.js';
 import type { SettingsManager } from './settings-manager.js';
-import { FileSystemService } from './file-system-service.js';
+import type { FileSystemService } from './file-system-service.js';
 import { shellQuote, validateHookPayload } from './util/sanitize.js';
 import { createLogger } from './util/logger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const log = createLogger('http');
 
-export function createApp(instanceManager: InstanceManager, settingsManager: SettingsManager): express.Application {
+export function createApp(instanceManager: InstanceManager, settingsManager: SettingsManager, fileSystemService: FileSystemService): express.Application {
   const app = express();
   app.use(express.json());
-  const fileSystemService = new FileSystemService(instanceManager);
 
   // Request logging for API routes
   app.use('/api', (req, _res, next) => {

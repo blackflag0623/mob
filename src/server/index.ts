@@ -7,6 +7,7 @@ import { DiscoveryService } from './discovery.js';
 import { SessionStore } from './session-store.js';
 import { ScrollbackBuffer } from './scrollback-buffer.js';
 import { SettingsManager } from './settings-manager.js';
+import { FileSystemService } from './file-system-service.js';
 import { ensureDir, getMobDir, getInstancesDir, getSessionsDir, getScrollbackDir } from './util/platform.js';
 import { DEFAULT_PORT } from '../shared/constants.js';
 import { installHooks } from './hooks.js';
@@ -39,10 +40,11 @@ scrollbackBuffer.start();
 sessionStore.pruneExpired();
 
 const instanceManager = new InstanceManager(ptyManager, discovery, sessionStore, scrollbackBuffer, settingsManager);
+const fileSystemService = new FileSystemService(instanceManager);
 
-const app = createApp(instanceManager, settingsManager);
+const app = createApp(instanceManager, settingsManager, fileSystemService);
 const server = http.createServer(app);
-const wsHandle = createWsServer(server, instanceManager, ptyManager);
+const wsHandle = createWsServer(server, instanceManager, ptyManager, fileSystemService);
 
 wsHandle.onUpdateRestart(() => {
   console.log('Update installed, restarting...');

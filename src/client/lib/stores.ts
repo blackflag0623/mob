@@ -34,6 +34,7 @@ export const fileContent = writable<{ path: string; content: string; language?: 
 export const expandedDirs = writable<Set<string>>(new Set());
 export const fileTreeLoading = writable(false);
 export const fileContentLoading = writable(false);
+export const fileChanged = writable<{ instanceId: string; filePath: string } | null>(null);
 
 // Reset file explorer when instance changes
 selectedInstanceId.subscribe(() => {
@@ -213,6 +214,9 @@ wsClient.onMessage((msg) => {
       break;
     case 'launch:conflicts':
       launchConflicts.set(msg.payload);
+      break;
+    case 'files:changed':
+      fileChanged.set(msg.payload);
       break;
   }
 
