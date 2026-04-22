@@ -36,9 +36,9 @@
 
   /* Sidebar gradient — Safari-style top sheen + bottom shade + inner edge */
   --sidebar-base: #f1ede7;
-  --sidebar-tint-top: rgba(255, 255, 255, 0.55);
-  --sidebar-tint-bottom: rgba(0, 0, 0, 0.05);
-  --sidebar-edge: rgba(0, 0, 0, 0.06);
+  --sidebar-tint-top: rgba(255, 255, 255, 0.85);
+  --sidebar-tint-bottom: rgba(60, 50, 35, 0.14);
+  --sidebar-edge: rgba(60, 50, 35, 0.10);
 
   /* Radii — macOS uses generous rounding */
   --radius-xs: 4px;
@@ -91,10 +91,10 @@
     --purple-soft: rgba(191, 90, 242, 0.18);
     --muted-soft: rgba(152, 152, 158, 0.18);
 
-    --sidebar-base: #2a2a2c;
-    --sidebar-tint-top: rgba(255, 255, 255, 0.04);
-    --sidebar-tint-bottom: rgba(0, 0, 0, 0.18);
-    --sidebar-edge: rgba(0, 0, 0, 0.18);
+    --sidebar-base: #2c2c2e;
+    --sidebar-tint-top: rgba(255, 255, 255, 0.10);
+    --sidebar-tint-bottom: rgba(0, 0, 0, 0.35);
+    --sidebar-edge: rgba(0, 0, 0, 0.40);
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3);

@@ -98,8 +98,8 @@
     background:
       linear-gradient(180deg,
         var(--sidebar-tint-top) 0%,
-        rgba(255,255,255,0.10) 30%,
-        transparent 60%,
+        rgba(255,255,255,0.04) 18%,
+        transparent 45%,
         var(--sidebar-tint-bottom) 100%),
       var(--sidebar-base);
     display: flex;
@@ -107,7 +107,11 @@
     overflow: hidden;
     transition: width 0.2s ease, min-width 0.2s ease;
     position: relative;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.20),
+      0 1px 3px rgba(0, 0, 0, 0.08),
+      0 8px 24px rgba(0, 0, 0, 0.08);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
   }
