@@ -1,8 +1,15 @@
 import fs from 'fs/promises';
+import os from 'os';
 import path from 'path';
 import chokidar from 'chokidar';
 import type { InstanceManager } from './instance-manager.js';
 import type { FileEntry } from '../shared/protocol.js';
+
+function expandHome(p: string): string {
+  if (p === '~') return os.homedir();
+  if (p.startsWith('~/') || p.startsWith('~\\')) return os.homedir() + p.slice(1);
+  return p;
+}
 
 const IGNORED = new Set([
   'node_modules', '.git', '.svn', '.hg', '.DS_Store',
@@ -36,7 +43,7 @@ export class FileSystemService {
     const instance = this.instanceManager.get(instanceId);
     if (!instance) return;
 
-    const absPath = path.resolve(instance.cwd, filePath);
+    const absPath = path.resolve(expandHome(instance.cwd), filePath);
     const existing = this.watchers.get(absPath);
     if (existing) {
       existing.refCount++;
@@ -74,7 +81,7 @@ export class FileSystemService {
       return;
     }
 
-    const absPath = path.resolve(instance.cwd, filePath);
+    const absPath = path.resolve(expandHome(instance.cwd), filePath);
     const entry = this.watchers.get(absPath);
     if (!entry) return;
 
@@ -96,7 +103,7 @@ export class FileSystemService {
     const instance = this.instanceManager.get(instanceId);
     if (!instance) throw new Error('Instance not found');
 
-    const basePath = path.resolve(instance.cwd);
+    const basePath = path.resolve(expandHome(instance.cwd));
     const targetPath = path.resolve(basePath, relativePath);
 
     if (!this.isWithinCwd(basePath, targetPath)) {
@@ -136,7 +143,7 @@ export class FileSystemService {
     const instance = this.instanceManager.get(instanceId);
     if (!instance) throw new Error('Instance not found');
 
-    const basePath = path.resolve(instance.cwd);
+    const basePath = path.resolve(expandHome(instance.cwd));
     const targetPath = path.resolve(basePath, filePath);
 
     if (!this.isWithinCwd(basePath, targetPath)) {

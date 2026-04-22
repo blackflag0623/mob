@@ -2,7 +2,7 @@
   import { onMount, onDestroy, tick } from 'svelte';
   import { Terminal } from 'xterm';
   import { FitAddon } from 'xterm-addon-fit';
-  import { selectedInstance, selectedInstanceId, wsClient, wsConnected, onInstanceRemove, settings } from '../lib/stores.js';
+  import { selectedInstance, selectedInstanceId, wsClient, wsConnected, onInstanceRemove, settings, activeMainTab } from '../lib/stores.js';
   import { matchesShortcut } from '../lib/shortcuts.js';
   import type { InstanceInfo } from '../lib/types.js';
 
@@ -62,7 +62,7 @@
     if (!cached) {
       const termSettings = get(settings).terminal;
       const t = new Terminal({
-        cursorBlink: true,
+        cursorBlink: false,
         fontSize: termSettings.fontSize,
         cursorStyle: termSettings.cursorStyle,
         fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace",
@@ -173,17 +173,6 @@
       }
       if (e.ctrlKey && e.key === 'c' && terminal!.hasSelection()) {
         navigator.clipboard.writeText(terminal!.getSelection());
-        return false;
-      }
-      if (e.ctrlKey && e.key === 'v') {
-        if (e.type === 'keydown') {
-          e.preventDefault();
-          navigator.clipboard.readText().then((text) => {
-            if (text && !isStopped) {
-              wsClient.send({ type: 'terminal:input', payload: { instanceId: inst.id, data: text } });
-            }
-          });
-        }
         return false;
       }
       return true;
@@ -305,6 +294,17 @@
     }
     prevConnected = connected;
   }
+
+  // Re-focus terminal when switching back to the Terminal tab
+  $: if ($activeMainTab === 'terminal' && terminal) {
+    tick().then(() => terminal?.focus());
+  }
+
+  function handleContainerClick() {
+    if (terminal && !window.getSelection()?.toString()) {
+      terminal.focus();
+    }
+  }
 </script>
 
 <div class="terminal-panel">
@@ -323,7 +323,7 @@
           Waiting for your input
         </div>
       {/if}
-      <div class="terminal-container" bind:this={terminalEl}></div>
+      <div class="terminal-container" bind:this={terminalEl} on:click={handleContainerClick}></div>
     {:else}
       <div class="external-info">
         <h3>External Instance</h3>
