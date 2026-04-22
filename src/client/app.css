@@ -1,20 +1,101 @@
+/* macOS / Safari inspired design tokens */
 :root {
-  --bg-primary: #0d1117;
-  --bg-secondary: #161b22;
-  --bg-tertiary: #21262d;
-  --border: #30363d;
-  --text-primary: #e6edf3;
-  --text-secondary: #8b949e;
-  --text-muted: #484f58;
-  --accent: #58a6ff;
-  --accent-hover: #79c0ff;
-  --green: #3fb950;
-  --yellow: #d29922;
-  --red: #f85149;
-  --orange: #d18616;
-  --purple: #bc8cff;
-  --sidebar-width: 320px;
-  --header-height: 48px;
+  /* Light mode (default — matches Safari default appearance) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f7;       /* sidebar / toolbar — translucent gray */
+  --bg-tertiary: #ececef;        /* hover, subtle fills */
+  --bg-elevated: rgba(255, 255, 255, 0.72);   /* vibrancy panels */
+  --bg-overlay: rgba(0, 0, 0, 0.28);          /* dialog scrim */
+
+  --border: rgba(0, 0, 0, 0.10);
+  --border-strong: rgba(0, 0, 0, 0.18);
+  --separator: rgba(0, 0, 0, 0.06);
+
+  --text-primary: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-muted: #8e8e93;
+
+  --accent: #007aff;             /* system blue */
+  --accent-hover: #0a84ff;
+  --accent-soft: rgba(0, 122, 255, 0.10);
+  --accent-soft-strong: rgba(0, 122, 255, 0.18);
+
+  --green: #30d158;
+  --yellow: #ff9f0a;
+  --red: #ff3b30;
+  --orange: #ff9500;
+  --purple: #bf5af2;
+
+  --green-soft: rgba(48, 209, 88, 0.14);
+  --yellow-soft: rgba(255, 159, 10, 0.16);
+  --red-soft: rgba(255, 59, 48, 0.14);
+  --purple-soft: rgba(191, 90, 242, 0.14);
+  --muted-soft: rgba(120, 120, 128, 0.16);
+
+  /* Sidebar gradient — Safari-style top sheen + bottom shade + inner edge */
+  --sidebar-base: #d6e8d2;
+  --sidebar-tint-top: rgba(255, 255, 255, 0.65);
+  --sidebar-tint-bottom: rgba(40, 90, 50, 0.10);
+  --sidebar-edge: rgba(40, 90, 50, 0.10);
+
+  /* Radii — macOS uses generous rounding */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+
+  /* Shadows — subtle, layered */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  --sidebar-width: 280px;
+  --header-height: 44px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #1e1e1e;
+    --bg-secondary: #252525;
+    --bg-tertiary: #323232;
+    --bg-elevated: rgba(40, 40, 42, 0.78);
+    --bg-overlay: rgba(0, 0, 0, 0.55);
+
+    --border: rgba(255, 255, 255, 0.10);
+    --border-strong: rgba(255, 255, 255, 0.20);
+    --separator: rgba(255, 255, 255, 0.06);
+
+    --text-primary: #f5f5f7;
+    --text-secondary: #a1a1a6;
+    --text-muted: #6e6e73;
+
+    --accent: #0a84ff;
+    --accent-hover: #409cff;
+    --accent-soft: rgba(10, 132, 255, 0.18);
+    --accent-soft-strong: rgba(10, 132, 255, 0.28);
+
+    --green: #32d74b;
+    --yellow: #ffd60a;
+    --red: #ff453a;
+    --orange: #ff9f0a;
+    --purple: #bf5af2;
+
+    --green-soft: rgba(50, 215, 75, 0.18);
+    --yellow-soft: rgba(255, 214, 10, 0.18);
+    --red-soft: rgba(255, 69, 58, 0.18);
+    --purple-soft: rgba(191, 90, 242, 0.18);
+    --muted-soft: rgba(152, 152, 158, 0.18);
+
+    --sidebar-base: #2a332a;
+    --sidebar-tint-top: rgba(255, 255, 255, 0.04);
+    --sidebar-tint-bottom: rgba(0, 0, 0, 0.18);
+    --sidebar-edge: rgba(0, 0, 0, 0.18);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
 }
 
 * {
@@ -24,11 +105,16 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display',
+               'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background: var(--bg-primary);
   color: var(--text-primary);
   overflow: hidden;
   height: 100vh;
+  font-size: 13px;
+  letter-spacing: -0.01em;
 }
 
 #app {
@@ -43,29 +129,41 @@ button {
   background: none;
   color: inherit;
   font: inherit;
+  letter-spacing: inherit;
 }
 
-input, select {
+input, select, textarea {
   font: inherit;
+  letter-spacing: inherit;
   color: var(--text-primary);
   background: var(--bg-primary);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 6px 10px;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
-input:focus, select:focus {
+input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-secondary);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-tertiary);
-  border-radius: 4px;
+  background: var(--border-strong);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+  background-clip: padding-box;
+  border: 2px solid transparent;
 }

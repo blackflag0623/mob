@@ -86,13 +86,26 @@
   .sidebar {
     width: var(--sidebar-width);
     min-width: var(--sidebar-width);
-    border-right: 1px solid var(--border);
-    background: var(--bg-secondary);
+    border-right: 1px solid var(--separator);
+    background:
+      linear-gradient(180deg,
+        var(--sidebar-tint-top) 0%,
+        rgba(255,255,255,0.15) 30%,
+        transparent 55%,
+        var(--sidebar-tint-bottom) 100%),
+      linear-gradient(90deg,
+        transparent 0%,
+        transparent calc(100% - 32px),
+        var(--sidebar-edge) 100%),
+      var(--sidebar-base);
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.04);
     display: flex;
     flex-direction: row;
     overflow: hidden;
     transition: width 0.2s ease, min-width 0.2s ease;
     position: relative;
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
   }
 
   .sidebar.collapsed {
@@ -200,27 +213,34 @@
 
   .tab-bar {
     display: flex;
-    gap: 4px;
+    gap: 2px;
     padding: 6px 12px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--separator);
     background: var(--bg-secondary);
     flex-shrink: 0;
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
   }
 
   .tab {
     padding: 4px 14px;
-    border: none;
+    border: 1px solid transparent;
     background: transparent;
     color: var(--text-secondary);
     cursor: pointer;
-    border-radius: 4px;
-    font-size: 13px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
     font-weight: 500;
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
   }
 
   .tab:hover { background: var(--bg-tertiary); color: var(--text-primary); }
-  .tab.active { background: var(--accent); color: white; }
+  .tab.active {
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--border);
+    box-shadow: var(--shadow-sm);
+  }
 
   .tab-content {
     flex: 1;
@@ -245,12 +265,15 @@
     top: 8px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--bg-tertiary);
+    background: var(--bg-elevated);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
     border: 1px solid var(--border);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     padding: 8px 14px;
     z-index: 100;
     pointer-events: none;
+    box-shadow: var(--shadow-md);
     animation: toast-fade 2s ease forwards;
     max-width: 400px;
     text-align: center;

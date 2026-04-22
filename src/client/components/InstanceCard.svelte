@@ -219,19 +219,25 @@
   .card {
     padding: 10px 12px;
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.15s;
-    background: var(--bg-secondary);
+    transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.05s;
+    background: var(--bg-primary);
+    box-shadow: var(--shadow-sm);
   }
 
   .card:hover {
-    border-color: var(--text-muted);
+    border-color: var(--border-strong);
+    background: var(--bg-primary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
   }
 
   .card.selected {
     border-color: var(--accent);
-    background: rgba(88, 166, 255, 0.05);
+    background: var(--accent-soft);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+    transform: none;
   }
 
   .card.needs-input {
@@ -278,7 +284,7 @@
 
   .edit-btn:hover {
     color: var(--accent);
-    background: rgba(88, 166, 255, 0.1);
+    background: var(--accent-soft);
   }
 
   .name {
@@ -410,9 +416,9 @@
   .ticket {
     font-size: 11px;
     color: var(--purple);
-    background: rgba(188, 140, 255, 0.1);
+    background: var(--purple-soft);
     padding: 1px 6px;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
   }
 
   .ticket-link {
@@ -427,9 +433,9 @@
   .ticket-status {
     font-size: 10px;
     color: var(--text-muted);
-    background: rgba(139, 148, 158, 0.15);
+    background: var(--muted-soft);
     padding: 1px 6px;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
   }
 
   .subtask {
@@ -470,7 +476,7 @@
   }
 
   .kill-btn:hover {
-    background: rgba(248, 81, 73, 0.2);
+    background: var(--red-soft);
     color: var(--red);
   }
 
@@ -492,7 +498,7 @@
   }
 
   .resume-btn:hover {
-    background: rgba(88, 166, 255, 0.15);
+    background: var(--accent-soft);
   }
 
   .dismiss-btn {
@@ -508,7 +514,7 @@
   }
 
   .dismiss-btn:hover {
-    background: rgba(139, 148, 158, 0.2);
+    background: var(--muted-soft);
     color: var(--text-secondary);
   }
 </style>

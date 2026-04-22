@@ -407,7 +407,9 @@
   .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--bg-overlay);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -417,12 +419,13 @@
   .dialog {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
     padding: 24px;
     width: 480px;
     max-width: 90vw;
     max-height: 90vh;
     overflow-y: auto;
+    box-shadow: var(--shadow-lg);
   }
 
   h2 {
@@ -501,12 +504,12 @@
     background: var(--bg-primary);
     border: 1px solid var(--border);
     border-top: none;
-    border-radius: 0 0 6px 6px;
+    border-radius: 0 0 var(--radius-sm) var(--radius-sm);
     list-style: none;
     max-height: 120px;
     overflow-y: auto;
     z-index: 10;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-md);
   }
 
   .suggestions li {
@@ -588,9 +591,9 @@
   }
 
   .conflict-warning {
-    background: rgba(255, 180, 50, 0.08);
-    border: 1px solid rgba(255, 180, 50, 0.3);
-    border-radius: 8px;
+    background: var(--yellow-soft);
+    border: 1px solid var(--yellow-soft);
+    border-radius: var(--radius-md);
     padding: 14px;
     margin-top: 16px;
   }
@@ -598,7 +601,7 @@
   .conflict-header {
     font-size: 13px;
     font-weight: 600;
-    color: #f0a030;
+    color: var(--yellow);
     margin-bottom: 8px;
   }
 
@@ -612,14 +615,14 @@
   }
 
   .conflict-icon {
-    color: #f0a030;
+    color: var(--yellow);
     flex-shrink: 0;
   }
 
   .conflict-item code {
     background: var(--bg-primary);
     padding: 1px 5px;
-    border-radius: 3px;
+    border-radius: var(--radius-xs);
     font-size: 11px;
   }
 
@@ -632,17 +635,17 @@
 
   .clone-btn {
     padding: 8px 16px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 13px;
     font-weight: 600;
-    color: #f0a030;
-    border: 1px solid rgba(255, 180, 50, 0.4);
+    color: var(--yellow);
+    border: 1px solid var(--yellow-soft);
     background: transparent;
   }
 
   .clone-btn:hover {
-    background: rgba(255, 180, 50, 0.1);
-    border-color: #f0a030;
+    background: var(--yellow-soft);
+    border-color: var(--yellow);
   }
 
   .clone-field {

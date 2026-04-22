@@ -33,22 +33,22 @@
     border-radius: 50%;
   }
 
-  .running { color: var(--green); background: rgba(63, 185, 80, 0.1); }
+  .running { color: var(--green); background: var(--green-soft); }
   .running::before { background: var(--green); }
 
-  .idle { color: var(--accent); background: rgba(88, 166, 255, 0.1); }
+  .idle { color: var(--accent); background: var(--accent-soft); }
   .idle::before { background: var(--accent); }
 
-  .waiting { color: var(--yellow); background: rgba(210, 153, 34, 0.15); }
+  .waiting { color: var(--yellow); background: var(--yellow-soft); }
   .waiting::before {
     background: var(--yellow);
     animation: pulse 1s ease-in-out infinite;
   }
 
-  .stopped { color: var(--text-muted); background: rgba(72, 79, 88, 0.1); }
+  .stopped { color: var(--text-muted); background: var(--muted-soft); }
   .stopped::before { background: var(--text-muted); }
 
-  .launching { color: var(--yellow); background: rgba(210, 153, 34, 0.1); }
+  .launching { color: var(--yellow); background: var(--yellow-soft); }
   .launching::before {
     background: var(--yellow);
     animation: pulse 1s ease-in-out infinite;

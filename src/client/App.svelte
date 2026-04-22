@@ -205,12 +205,14 @@
   header {
     height: var(--header-height);
     background: var(--bg-secondary);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--separator);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 16px;
+    padding: 0 14px;
     flex-shrink: 0;
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
   }
 
   .logo {
@@ -220,10 +222,10 @@
   }
 
   .logo-text {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: -0.5px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
   }
 
   .logo-sub {
@@ -240,7 +242,7 @@
   .header-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
   }
 
   .connection-status {
@@ -269,46 +271,51 @@
 
   .settings-btn {
     background: transparent;
-    border: 1px solid var(--border);
+    border: 1px solid transparent;
     color: var(--text-secondary);
     padding: 5px 7px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: color 0.15s, border-color 0.15s;
+    transition: background 0.15s, color 0.15s;
   }
 
   .settings-btn:hover {
     color: var(--text-primary);
-    border-color: var(--text-muted);
+    background: var(--bg-tertiary);
   }
 
   .launch-btn {
     background: var(--accent);
     color: #fff;
-    padding: 6px 14px;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 600;
-    transition: background 0.15s;
+    padding: 5px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+    transition: background 0.15s, transform 0.05s;
   }
 
   .launch-btn:hover {
     background: var(--accent-hover);
   }
 
+  .launch-btn:active {
+    transform: scale(0.97);
+  }
+
   .launch-btn kbd {
     font-family: inherit;
     font-size: 11px;
-    opacity: 0.7;
+    opacity: 0.75;
     margin-left: 4px;
   }
 
   .update-banner {
-    background: rgba(88, 166, 255, 0.1);
-    border-bottom: 1px solid rgba(88, 166, 255, 0.3);
+    background: var(--accent-soft);
+    border-bottom: 1px solid var(--accent-soft-strong);
     padding: 6px 16px;
     display: flex;
     align-items: center;
@@ -324,15 +331,15 @@
 
   .update-text code {
     font-size: 12px;
-    background: rgba(88, 166, 255, 0.15);
+    background: var(--accent-soft-strong);
     padding: 1px 5px;
-    border-radius: 3px;
+    border-radius: var(--radius-xs);
   }
 
   .update-btn {
     font-size: 12px;
     padding: 3px 10px;
-    border-radius: 4px;
+    border-radius: var(--radius-xs);
     background: var(--accent);
     color: #fff;
     font-weight: 600;
@@ -371,13 +378,14 @@
   }
 
   .error-toast {
-    background: rgba(248, 81, 73, 0.15);
-    border: 1px solid rgba(248, 81, 73, 0.4);
+    background: var(--red-soft);
+    border: 1px solid var(--red-soft);
     color: var(--red);
     padding: 10px 14px;
-    border-radius: 8px;
+    border-radius: var(--radius-md);
     font-size: 13px;
     cursor: pointer;
+    box-shadow: var(--shadow-md);
     animation: toast-slide-in 0.3s ease;
   }
 

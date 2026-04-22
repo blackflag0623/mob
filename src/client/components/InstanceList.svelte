@@ -109,7 +109,7 @@
   }
 
   .resume-all-btn:hover {
-    background: rgba(88, 166, 255, 0.15);
+    background: var(--accent-soft);
   }
 
   .project-group {
@@ -130,11 +130,11 @@
   }
 
   .project-header:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-tertiary);
   }
 
   .project-header.has-selected {
-    background: rgba(88, 166, 255, 0.12);
+    background: var(--accent-soft);
     border-left: 2px solid var(--accent);
     padding-left: 6px;
   }
@@ -165,7 +165,7 @@
   .project-count {
     font-size: 10px;
     color: var(--text-muted);
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--bg-tertiary);
     padding: 1px 6px;
     border-radius: 8px;
   }

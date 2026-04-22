@@ -69,26 +69,26 @@
         allowProposedApi: true,
         rightClickSelectsWord: true,
         theme: {
-          background: '#0d1117',
-          foreground: '#e6edf3',
-          cursor: '#58a6ff',
-          selectionBackground: '#264f78',
-          black: '#484f58',
-          red: '#f85149',
-          green: '#3fb950',
-          yellow: '#d29922',
-          blue: '#58a6ff',
-          magenta: '#bc8cff',
-          cyan: '#39d353',
-          white: '#e6edf3',
-          brightBlack: '#6e7681',
-          brightRed: '#ffa198',
-          brightGreen: '#56d364',
-          brightYellow: '#e3b341',
-          brightBlue: '#79c0ff',
-          brightMagenta: '#d2a8ff',
-          brightCyan: '#56d364',
-          brightWhite: '#f0f6fc',
+          background: '#1e1e1e',
+          foreground: '#f5f5f7',
+          cursor: '#0a84ff',
+          selectionBackground: 'rgba(10, 132, 255, 0.35)',
+          black: '#3a3a3c',
+          red: '#ff453a',
+          green: '#32d74b',
+          yellow: '#ffd60a',
+          blue: '#0a84ff',
+          magenta: '#bf5af2',
+          cyan: '#64d2ff',
+          white: '#f5f5f7',
+          brightBlack: '#8e8e93',
+          brightRed: '#ff6961',
+          brightGreen: '#32d74b',
+          brightYellow: '#ffd60a',
+          brightBlue: '#409cff',
+          brightMagenta: '#da8fff',
+          brightCyan: '#70d7ff',
+          brightWhite: '#ffffff',
         },
         scrollback: termSettings.scrollbackLines,
         convertEol: true,
@@ -359,14 +359,25 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: var(--bg-primary);
+    background:
+      radial-gradient(circle at 50% 35%, rgba(0,0,0,0.025) 0%, transparent 60%),
+      var(--bg-primary);
     overflow: hidden;
+  }
+
+  .no-selection {
+    font-size: 14px;
+  }
+
+  .no-selection p:first-child {
+    color: var(--text-secondary);
+    font-weight: 500;
   }
 
   .waiting-banner {
     padding: 6px 12px;
-    background: rgba(210, 153, 34, 0.15);
-    border-bottom: 1px solid rgba(210, 153, 34, 0.3);
+    background: var(--yellow-soft);
+    border-bottom: 1px solid var(--yellow-soft);
     color: var(--yellow);
     font-size: 12px;
     text-align: center;
@@ -392,7 +403,7 @@
 
   .stopped-banner {
     padding: 6px 12px;
-    background: rgba(139, 148, 158, 0.15);
+    background: var(--muted-soft);
     border-bottom: 1px solid var(--border);
     color: var(--text-muted);
     font-size: 12px;
@@ -402,7 +413,7 @@
 
   .launching-banner {
     padding: 6px 12px;
-    background: rgba(210, 153, 34, 0.1);
+    background: var(--yellow-soft);
     border-bottom: 1px solid var(--border);
     color: var(--yellow);
     font-size: 12px;
@@ -417,7 +428,7 @@
   .spinner {
     width: 12px;
     height: 12px;
-    border: 2px solid rgba(210, 153, 34, 0.3);
+    border: 2px solid var(--yellow-soft);
     border-top-color: var(--yellow);
     border-radius: 50%;
     animation: spin 0.8s linear infinite;

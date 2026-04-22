@@ -285,7 +285,9 @@
   .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--bg-overlay);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -295,12 +297,13 @@
   .dialog {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
-    border-radius: 12px;
+    border-radius: var(--radius-xl);
     padding: 24px;
     width: 560px;
     max-width: 90vw;
     max-height: 90vh;
     overflow-y: auto;
+    box-shadow: var(--shadow-lg);
   }
 
   h2 {
