@@ -94,7 +94,8 @@
     width: var(--sidebar-width);
     min-width: var(--sidebar-width);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-bottom: none;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     background:
       linear-gradient(180deg,
         var(--sidebar-tint-top) 0%,
@@ -109,7 +110,6 @@
     position: relative;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.18),
-      inset 0 -1px 0 rgba(0, 0, 0, 0.20),
       0 1px 3px rgba(0, 0, 0, 0.08),
       0 8px 24px rgba(0, 0, 0, 0.08);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
@@ -236,7 +236,8 @@
     position: relative;
     background: var(--bg-primary);
     border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
+    border-bottom: none;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06);
   }
 
