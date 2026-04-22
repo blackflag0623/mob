@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { showSettingsDialog, settings, sidebarCollapsed, serverVersion, updateAvailable, wsClient } from '../lib/stores.js';
+  import { showSettingsDialog, settings, sidebarCollapsed, serverVersion, updateAvailable, wsClient, endpointConnections } from '../lib/stores.js';
+  import { endpoints, makeEndpointId, LOCAL_ENDPOINT_ID, type Endpoint } from '../lib/endpoints.js';
   import { saveSettings } from '../lib/settings-client.js';
   import { eventToShortcut, formatShortcut } from '../lib/shortcuts.js';
   import { DEFAULT_SETTINGS } from '../../shared/settings.js';
@@ -124,8 +125,33 @@
     { id: 'launch', label: 'Launch Defaults' },
     { id: 'terminal', label: 'Terminal' },
     { id: 'general', label: 'General' },
+    { id: 'servers', label: 'Servers' },
     { id: 'jira', label: 'JIRA' },
   ];
+
+  // Endpoint editing state
+  let newName = '';
+  let newUrl = '';
+
+  function addEndpoint() {
+    const name = newName.trim();
+    const url = newUrl.trim().replace(/\/+$/, '');
+    if (!name || !url) return;
+    endpoints.update((list) => [...list, { id: makeEndpointId(), name, baseUrl: url }]);
+    newName = '';
+    newUrl = '';
+  }
+
+  function removeEndpoint(id: string) {
+    if (id === LOCAL_ENDPOINT_ID) return;
+    if (!confirm('Remove this server endpoint? Its instances will disappear from the dashboard.')) return;
+    endpoints.update((list) => list.filter((e) => e.id !== id));
+  }
+
+  function updateEndpoint(id: string, patch: Partial<Endpoint>) {
+    endpoints.update((list) => list.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+  }
+
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
@@ -258,6 +284,30 @@
             {checking ? 'Checking...' : 'Check for updates'}
           </button>
         </div>
+      {:else if activeTab === 'servers'}
+        <div class="servers-list">
+          {#each $endpoints as ep (ep.id)}
+            <div class="server-row">
+              <span class="conn-dot" class:on={$endpointConnections[ep.id]} title={$endpointConnections[ep.id] ? 'Connected' : 'Disconnected'}></span>
+              <input class="server-name" type="text" value={ep.name} on:change={(e) => updateEndpoint(ep.id, { name: (e.currentTarget as HTMLInputElement).value })} />
+              {#if ep.id === LOCAL_ENDPOINT_ID}
+                <input class="server-url" type="text" value="same origin" disabled />
+                <span class="row-action-spacer"></span>
+              {:else}
+                <input class="server-url" type="text" value={ep.baseUrl} placeholder="http://192.168.1.10:4040"
+                       on:change={(e) => updateEndpoint(ep.id, { baseUrl: (e.currentTarget as HTMLInputElement).value.trim().replace(/\/+$/, '') })} />
+                <button class="remove-endpoint" on:click={() => removeEndpoint(ep.id)} title="Remove">×</button>
+              {/if}
+            </div>
+          {/each}
+        </div>
+        <div class="server-row add-server">
+          <span class="conn-dot placeholder"></span>
+          <input class="server-name" type="text" placeholder="Name (e.g. lab-mac)" bind:value={newName} />
+          <input class="server-url" type="text" placeholder="http://host:4040" bind:value={newUrl} />
+          <button class="add-server-btn" on:click={addEndpoint} disabled={!newName.trim() || !newUrl.trim()}>Add</button>
+        </div>
+        <p class="hint">Remote mob servers must be reachable from the browser. Either start them with <code>MOB_HOST=0.0.0.0</code> for LAN, or expose <code>:4040</code> via a tunnel.</p>
       {:else if activeTab === 'jira'}
         <div class="field">
           <label for="settings-jira-url">JIRA Base URL</label>
@@ -299,7 +349,7 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-xl);
     padding: 24px;
-    width: 560px;
+    width: 720px;
     max-width: 90vw;
     max-height: 90vh;
     overflow-y: auto;
@@ -327,6 +377,7 @@
     border-bottom: 2px solid transparent;
     cursor: pointer;
     transition: color 0.15s;
+    white-space: nowrap;
   }
 
   .tab:hover {
@@ -525,5 +576,85 @@
   .check-update-btn:disabled {
     opacity: 0.5;
     cursor: default;
+  }
+
+  .servers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .server-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .conn-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .conn-dot.on { background: var(--green); }
+  .conn-dot.placeholder { visibility: hidden; }
+  input.server-name {
+    width: 160px;
+    flex: 0 0 160px;
+    min-width: 0;
+  }
+  input.server-url {
+    flex: 1 1 0;
+    min-width: 0;
+    width: auto;
+  }
+  input.server-url:disabled {
+    color: var(--text-muted);
+    font-style: italic;
+    background: var(--bg-tertiary);
+  }
+  .remove-endpoint,
+  .row-action-spacer {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+  .remove-endpoint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+  }
+  .remove-endpoint:hover { color: var(--red); background: var(--red-soft); }
+  .add-server { margin-top: 12px; }
+  .add-server-btn {
+    width: 64px;
+    height: 26px;
+    flex-shrink: 0;
+    padding: 0;
+    border-radius: 4px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+  }
+  .add-server-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .hint {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .hint code {
+    background: var(--bg-primary);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11px;
   }
 </style>

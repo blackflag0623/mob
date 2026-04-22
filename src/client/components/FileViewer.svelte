@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
   import { selectedFile, fileContent, fileContentLoading, fileChanged, wsClient } from '../lib/stores.js';
+  import { instanceUrl } from '../lib/rest.js';
   import { createHighlighter, type Highlighter } from 'shiki';
 
   let prevWatch: { instanceId: string; path: string } | null = null;
@@ -52,7 +53,7 @@
   async function loadContent(instanceId: string, filePath: string) {
     fileContentLoading.set(true);
     try {
-      const res = await fetch(`/api/instances/${instanceId}/files/content?path=${encodeURIComponent(filePath)}`);
+      const res = await fetch(instanceUrl(instanceId, `/files/content?path=${encodeURIComponent(filePath)}`));
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Failed to load file');

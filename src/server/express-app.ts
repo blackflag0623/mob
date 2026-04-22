@@ -17,6 +17,25 @@ export function createApp(instanceManager: InstanceManager, settingsManager: Set
   const app = express();
   app.use(express.json());
 
+  // Permissive CORS so a portal hosted elsewhere on the LAN can connect to this server.
+  // Mob has no auth model, so any host that can reach the port is already trusted.
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Vary', 'Origin');
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(204);
+      return;
+    }
+    next();
+  });
+
   // Request logging for API routes
   app.use('/api', (req, _res, next) => {
     log.info(`${req.method} ${req.originalUrl}`);

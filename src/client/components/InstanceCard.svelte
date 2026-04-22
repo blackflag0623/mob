@@ -3,11 +3,15 @@
   import StatusBadge from './StatusBadge.svelte';
   import ProgressBar from './ProgressBar.svelte';
   import { selectedInstanceId, wsClient, groupNames } from '../lib/stores.js';
+  import { endpoints } from '../lib/endpoints.js';
 
   export let instance: InstanceInfo;
 
   $: selected = $selectedInstanceId === instance.id;
   $: needsInput = instance.state === 'waiting';
+  $: endpointName = $endpoints.length > 1 && instance.endpointId
+    ? ($endpoints.find((e) => e.id === instance.endpointId)?.name || null)
+    : null;
 
   // Edit state
   let editing = false;
@@ -201,6 +205,9 @@
 
     <div class="card-footer">
       <span class="badge-type" title={instance.managed ? 'Launched and controlled by mob' : 'Discovered externally via hooks'}>{instance.managed ? 'managed' : 'external'}</span>
+      {#if endpointName}
+        <span class="badge-endpoint" title="Mob server endpoint">{endpointName}</span>
+      {/if}
       <div class="card-actions">
         {#if instance.managed && instance.state === 'stopped'}
           <button class="resume-btn" on:click={resume} title="Resume session">Resume</button>
@@ -461,6 +468,17 @@
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
+  }
+
+  .badge-endpoint {
+    font-size: 10px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 1px 6px;
+    border-radius: var(--radius-xs);
+    margin-left: 6px;
+    text-transform: none;
+    letter-spacing: 0;
   }
 
   .kill-btn {

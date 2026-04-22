@@ -1,12 +1,21 @@
 import { writable, derived, get } from 'svelte/store';
-import type { InstanceInfo, LaunchConflicts, FileEntry } from './types.js';
+import type { InstanceInfo, LaunchConflicts, FileEntry, ClientMessage } from './types.js';
 import type { Settings } from '../../shared/settings.js';
 import { DEFAULT_SETTINGS } from '../../shared/settings.js';
-import { WsClient } from './ws-client.js';
+import { pool } from './endpoint-pool.js';
+import { endpoints, selectedLaunchEndpoint, LOCAL_ENDPOINT_ID } from './endpoints.js';
 import { loadSettings } from './settings-client.js';
 import { requestNotificationPermission, checkWaitingNotification, clearInstanceState } from './notifications.js';
 
-export const wsClient = new WsClient();
+// Facade so existing call sites `wsClient.send(...)` keep working,
+// now routing to the right endpoint based on payload.instanceId.
+export const wsClient = {
+  send(msg: ClientMessage) { pool.send(msg); },
+  sendTo(endpointId: string, msg: ClientMessage) { pool.send(msg, endpointId); },
+  onMessage(handler: (msg: any) => void): () => void {
+    return pool.onMessage((msg) => handler(msg));
+  },
+};
 export const instances = writable<Map<string, InstanceInfo>>(new Map());
 const _storedInstanceId = sessionStorage.getItem('mob:selectedInstanceId');
 export const selectedInstanceId = writable<string | null>(_storedInstanceId);
@@ -14,7 +23,9 @@ selectedInstanceId.subscribe((id) => {
   if (id) sessionStorage.setItem('mob:selectedInstanceId', id);
   else sessionStorage.removeItem('mob:selectedInstanceId');
 });
-export const wsConnected = writable(false);
+// Per-endpoint connection state; aggregated `wsConnected` = any connected
+export const endpointConnections = writable<Record<string, boolean>>({});
+export const wsConnected = derived(endpointConnections, ($c) => Object.values($c).some(Boolean));
 export const showLaunchDialog = writable(false);
 export const showSettingsDialog = writable(false);
 export const settings = writable<Settings>(structuredClone(DEFAULT_SETTINGS));
@@ -139,10 +150,13 @@ export const selectedInCollapsedGroup = derived(
   },
 );
 
-// Wire up WebSocket to stores
-wsClient.setConnectionHandler((connected) => {
-  wsConnected.set(connected);
+// Wire pool connection state into per-endpoint store
+pool.onConnection((endpointId, connected) => {
+  endpointConnections.update((m) => ({ ...m, [endpointId]: connected }));
 });
+
+// Track which endpoints we've seen snapshots from (used to remove stale instances on reconnect)
+const snapshotEndpoints = new Set<string>();
 
 // Event emitter for instance removal (used by TerminalPanel for cache cleanup)
 type InstanceRemoveHandler = (instanceId: string) => void;
@@ -152,20 +166,29 @@ export function onInstanceRemove(handler: InstanceRemoveHandler): () => void {
   return () => instanceRemoveHandlers.delete(handler);
 }
 
-wsClient.onMessage((msg) => {
+pool.onMessage((msg, endpointId) => {
   switch (msg.type) {
     case 'snapshot': {
-      const map = new Map(msg.payload.instances.map((i) => [i.id, i]));
-      instances.set(map);
-      if (msg.payload.version) {
+      // Replace this endpoint's instances; keep others
+      snapshotEndpoints.add(endpointId);
+      instances.update((map) => {
+        const next = new Map(map);
+        // Drop existing instances belonging to this endpoint
+        for (const id of Array.from(next.keys())) {
+          if (next.get(id)?.endpointId === endpointId) next.delete(id);
+        }
+        for (const i of msg.payload.instances) next.set(i.id, i);
+        return next;
+      });
+      // Server version comes from the local endpoint; remote versions are ignored for the header
+      if (endpointId === LOCAL_ENDPOINT_ID && msg.payload.version) {
         serverVersion.set(msg.payload.version);
       }
-      if (msg.payload.updateAvailable) {
+      if (endpointId === LOCAL_ENDPOINT_ID && msg.payload.updateAvailable) {
         updateAvailable.set(msg.payload.updateAvailable);
       }
-      // Clear restored selectedInstanceId if it no longer exists in the snapshot
       const currentId = get(selectedInstanceId);
-      if (currentId && !map.has(currentId)) {
+      if (currentId && !get(instances).has(currentId)) {
         selectedInstanceId.set(null);
       }
       break;
@@ -185,32 +208,25 @@ wsClient.onMessage((msg) => {
         map.delete(msg.payload.instanceId);
         return new Map(map);
       });
-      selectedInstanceId.update((id) =>
-        id === msg.payload.instanceId ? null : id
-      );
+      selectedInstanceId.update((id) => (id === msg.payload.instanceId ? null : id));
       clearInstanceState(msg.payload.instanceId);
-      // Notify listeners (e.g., TerminalPanel) for cache cleanup
-      for (const handler of instanceRemoveHandlers) {
-        handler(msg.payload.instanceId);
-      }
+      for (const handler of instanceRemoveHandlers) handler(msg.payload.instanceId);
       break;
     case 'instance:select':
       selectedInstanceId.set(msg.payload.instanceId);
       break;
     case 'error':
       errors.update((errs) => [
-        ...errs.slice(-19), // keep last 20
+        ...errs.slice(-19),
         { message: msg.payload.message, context: msg.payload.context, timestamp: Date.now() },
       ]);
       break;
     case 'update:status':
       updateStatus.set(msg.payload.status);
-      if (msg.payload.error) {
-        updateError.set(msg.payload.error);
-      }
+      if (msg.payload.error) updateError.set(msg.payload.error);
       break;
     case 'update:available':
-      updateAvailable.set(msg.payload);
+      if (endpointId === LOCAL_ENDPOINT_ID) updateAvailable.set(msg.payload);
       break;
     case 'launch:conflicts':
       launchConflicts.set(msg.payload);
@@ -219,12 +235,26 @@ wsClient.onMessage((msg) => {
       fileChanged.set(msg.payload);
       break;
   }
-
-  // terminal:scrollback and terminal:output are handled by TerminalPanel via onMessage
 });
 
-// Connect on load
-wsClient.connect();
+// When an endpoint disconnects, remove its instances from the map
+pool.onConnection((endpointId, connected) => {
+  if (connected) return;
+  if (!snapshotEndpoints.has(endpointId)) return;
+  instances.update((map) => {
+    const next = new Map(map);
+    for (const id of Array.from(next.keys())) {
+      if (next.get(id)?.endpointId === endpointId) next.delete(id);
+    }
+    return next;
+  });
+});
+
+// Keep pool's launch endpoint in sync with user selection
+selectedLaunchEndpoint.subscribe((id) => pool.setLaunchEndpoint(id));
+
+// Start the pool — creates a WsClient per configured endpoint
+pool.start();
 
 // Load settings from server
 loadSettings()

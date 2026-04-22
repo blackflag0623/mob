@@ -1,5 +1,6 @@
 <script lang="ts">
   import { fileTreeCache, expandedDirs, selectedFile, fileTreeLoading } from '../lib/stores.js';
+  import { instanceUrl } from '../lib/rest.js';
   import type { FileEntry } from '../lib/types.js';
 
   export let instanceId: string;
@@ -23,7 +24,7 @@
     error = null;
     try {
       const q = dirPath ? `?path=${encodeURIComponent(dirPath)}` : '';
-      const res = await fetch(`/api/instances/${instanceId}/files${q}`);
+      const res = await fetch(instanceUrl(instanceId, `/files${q}`));
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Failed to load');

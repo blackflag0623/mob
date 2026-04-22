@@ -10,7 +10,7 @@ function log(level: 'info' | 'warn' | 'error', ...args: unknown[]) {
 
 export class WsClient {
   private ws: WebSocket | null = null;
-  private url: string;
+  readonly url: string;
   private handlers = new Set<MessageHandler>();
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private reconnectDelay = 1000;

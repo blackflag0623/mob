@@ -83,6 +83,8 @@ export interface InstanceInfo {
   historical?: boolean;
   lastHookUpdate?: number;
   lastHookEvent?: string;
+  /** Client-only: which mob endpoint this instance lives on. */
+  endpointId?: string;
 }
 
 export type InstanceState = 'launching' | 'running' | 'idle' | 'waiting' | 'stopped';

@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
-  import { showLaunchDialog, wsClient, settings, launchConflicts, instances, groupNames } from '../lib/stores.js';
+  import { showLaunchDialog, wsClient, settings, launchConflicts, instances, groupNames, endpointConnections } from '../lib/stores.js';
+  import { endpoints, selectedLaunchEndpoint } from '../lib/endpoints.js';
+  import { endpointUrl } from '../lib/rest.js';
   import { get } from 'svelte/store';
   import type { LaunchConflicts } from '../lib/types.js';
 
@@ -11,6 +13,11 @@
   let project = '';
   let model = launchDefaults.model;
   let permissionMode = launchDefaults.permissionMode;
+
+  // Local mirror of the selected endpoint for stable two-way binding.
+  let endpointId = get(selectedLaunchEndpoint);
+  $: selectedLaunchEndpoint.set(endpointId);
+  $: targetConnected = !!$endpointConnections[endpointId];
 
   // Autocomplete state
   let suggestions: Array<{ path: string; display: string }> = [];
@@ -29,7 +36,7 @@
     abortController?.abort();
     abortController = new AbortController();
     try {
-      const res = await fetch(`/api/completions/dirs?q=${encodeURIComponent(query)}`, {
+      const res = await fetch(endpointUrl(endpointId, `/api/completions/dirs?q=${encodeURIComponent(query)}`), {
         signal: abortController.signal,
       });
       suggestions = await res.json();
@@ -203,15 +210,20 @@
   let browsing = false;
   let canBrowse = false;
 
-  // Hide browse button on Windows (native dialog locks the browser)
-  fetch('/api/platform').then(r => r.json()).then(d => {
-    canBrowse = d.platform !== 'win32';
-  }).catch(() => {});
+  // Hide browse button on Windows (native dialog locks the browser); also re-check when target endpoint changes
+  $: void checkPlatform(endpointId);
+  async function checkPlatform(epId: string) {
+    try {
+      const res = await fetch(endpointUrl(epId, '/api/platform'));
+      const d = await res.json();
+      canBrowse = d.platform !== 'win32';
+    } catch { canBrowse = false; }
+  }
 
   async function browseDir() {
     browsing = true;
     try {
-      const res = await fetch('/api/browse-dir', {
+      const res = await fetch(endpointUrl(endpointId, '/api/browse-dir'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ startDir: cwd || '~' }),
@@ -253,6 +265,23 @@
     <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
     <form autocomplete="off" on:submit|preventDefault={launch}>
 
+    {#if $endpoints.length > 1}
+      <div class="field">
+        <label for="mob-launch-endpoint">Mob Server</label>
+        <div class="endpoint-row">
+          <span class="conn-dot" class:on={targetConnected} title={targetConnected ? 'Connected' : 'Disconnected'}></span>
+          <select id="mob-launch-endpoint" bind:value={endpointId} on:change={() => { cwd = ''; suggestions = []; showSuggestions = false; }}>
+            {#each $endpoints as ep (ep.id)}
+              <option value={ep.id}>{ep.name}{ep.baseUrl ? ` — ${ep.baseUrl}` : ''}</option>
+            {/each}
+          </select>
+        </div>
+        {#if !targetConnected}
+          <p class="endpoint-hint">Server is not connected. Check it in Settings → Servers.</p>
+        {/if}
+      </div>
+    {/if}
+
     <div class="field">
       <label for="mob-launch-cwd">Working Directory *</label>
       <div class="autocomplete-wrap">
@@ -266,14 +295,15 @@
             on:keydown={handleCwdKeydown}
             on:focus={() => { if (suggestions.length) showSuggestions = true; }}
             on:blur={() => { setTimeout(() => showSuggestions = false, 200); }}
-            placeholder="~/Development/my-project"
+            placeholder={targetConnected ? '~/Development/my-project' : 'Server not connected'}
+            disabled={!targetConnected}
             autocomplete="off"
             data-form-type="other"
             data-lpignore="true"
             use:autofocus
           />
           {#if canBrowse}
-            <button type="button" class="browse-btn" on:click={browseDir} disabled={browsing} title="Browse for folder">
+            <button type="button" class="browse-btn" on:click={browseDir} disabled={browsing || !targetConnected} title="Browse for folder">
               {#if browsing}
                 ...
               {:else}
@@ -397,7 +427,7 @@
     {:else}
       <div class="actions">
         <button class="cancel-btn" on:click={cancel}>Cancel</button>
-        <button class="launch-btn" on:click={launch}>Launch (Ctrl+Enter)</button>
+        <button class="launch-btn" on:click={launch} disabled={!targetConnected}>Launch (Ctrl+Enter)</button>
       </div>
     {/if}
   </div>
@@ -659,5 +689,34 @@
     font-size: 12px;
     color: var(--text-secondary);
     font-weight: 600;
+  }
+
+  .endpoint-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .endpoint-row select {
+    flex: 1;
+  }
+  .conn-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .conn-dot.on { background: var(--green); }
+  .endpoint-hint {
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--yellow);
+  }
+  .launch-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .launch-btn:disabled:hover {
+    background: var(--accent);
   }
 </style>
