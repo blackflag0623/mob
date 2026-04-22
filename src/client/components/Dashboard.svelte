@@ -94,8 +94,7 @@
     width: var(--sidebar-width);
     min-width: var(--sidebar-width);
     border: 1px solid var(--border);
-    border-bottom: none;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-radius: var(--radius-lg);
     background:
       linear-gradient(180deg,
         var(--sidebar-tint-top) 0%,
@@ -236,8 +235,7 @@
     position: relative;
     background: var(--bg-primary);
     border: 1px solid var(--border);
-    border-bottom: none;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-radius: var(--radius-lg);
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06);
   }
 
