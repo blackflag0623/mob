@@ -43,10 +43,15 @@
         {/each}
       </div>
     {/if}
-    <button class="collapse-toggle" on:click={() => sidebarCollapsed.update(v => !v)} title={$sidebarCollapsed ? 'Expand sidebar (Alt+B)' : 'Collapse sidebar (Alt+B)'}>
-      <span class="collapse-icon">{$sidebarCollapsed ? '›' : '‹'}</span>
-    </button>
   </aside>
+  <button
+    class="collapse-toggle"
+    class:collapsed={$sidebarCollapsed}
+    on:click={() => sidebarCollapsed.update(v => !v)}
+    title={$sidebarCollapsed ? 'Expand sidebar (Alt+B)' : 'Collapse sidebar (Alt+B)'}
+  >
+    <span class="collapse-icon">{$sidebarCollapsed ? '›' : '‹'}</span>
+  </button>
   <main class="main-area">
     <div class="tab-bar">
       <button class="tab" class:active={$activeMainTab === 'terminal'} on:click={() => activeMainTab.set('terminal')}>Terminal</button>
@@ -81,7 +86,8 @@
     flex: 1;
     display: flex;
     gap: 10px;
-    overflow: hidden;
+    overflow: visible;
+    position: relative;
   }
 
   .sidebar {
@@ -124,23 +130,40 @@
   }
 
   .collapse-toggle {
-    width: 36px;
-    min-width: 36px;
-    border: none;
-    background: transparent;
+    position: absolute;
+    top: 50%;
+    left: calc(var(--sidebar-width) - 6px);
+    transform: translateY(-50%);
+    width: 22px;
+    height: 36px;
+    border-radius: 11px;
+    border: 1px solid var(--border);
+    background: var(--bg-primary);
     color: var(--text-muted);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    font-size: 16px;
-    transition: color 0.15s;
+    font-size: 13px;
+    box-shadow: var(--shadow-sm);
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s, background 0.15s, left 0.2s ease;
+    z-index: 5;
+  }
+
+  .collapse-toggle.collapsed {
+    left: 30px;
+  }
+
+  .dashboard:hover .collapse-toggle,
+  .collapse-toggle:focus-visible {
+    opacity: 1;
   }
 
   .collapse-toggle:hover {
     color: var(--text-primary);
-    background: var(--bg-tertiary);
+    background: var(--bg-secondary);
   }
 
   .collapse-icon {
