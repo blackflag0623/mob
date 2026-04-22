@@ -80,30 +80,28 @@
   .dashboard {
     flex: 1;
     display: flex;
+    gap: 10px;
     overflow: hidden;
   }
 
   .sidebar {
     width: var(--sidebar-width);
     min-width: var(--sidebar-width);
-    border-right: 1px solid var(--separator);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
     background:
       linear-gradient(180deg,
         var(--sidebar-tint-top) 0%,
-        rgba(255,255,255,0.15) 30%,
-        transparent 55%,
+        rgba(255,255,255,0.10) 30%,
+        transparent 60%,
         var(--sidebar-tint-bottom) 100%),
-      linear-gradient(90deg,
-        transparent 0%,
-        transparent calc(100% - 32px),
-        var(--sidebar-edge) 100%),
       var(--sidebar-base);
-    box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.04);
     display: flex;
     flex-direction: row;
     overflow: hidden;
     transition: width 0.2s ease, min-width 0.2s ease;
     position: relative;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
   }
@@ -209,6 +207,10 @@
     flex-direction: column;
     overflow: hidden;
     position: relative;
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06);
   }
 
   .tab-bar {
@@ -218,6 +220,7 @@
     border-bottom: 1px solid var(--separator);
     background: var(--bg-secondary);
     flex-shrink: 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
   }

@@ -363,6 +363,7 @@
       radial-gradient(circle at 50% 35%, rgba(0,0,0,0.025) 0%, transparent 60%),
       var(--bg-primary);
     overflow: hidden;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   }
 
   .no-selection {

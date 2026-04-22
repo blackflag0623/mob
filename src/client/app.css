@@ -1,14 +1,16 @@
 /* macOS / Safari inspired design tokens */
 :root {
   /* Light mode (default — matches Safari default appearance) */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f5f7;       /* sidebar / toolbar — translucent gray */
-  --bg-tertiary: #ececef;        /* hover, subtle fills */
-  --bg-elevated: rgba(255, 255, 255, 0.72);   /* vibrancy panels */
+  --app-backdrop: #9a948c;       /* outer window chrome, warm taupe */
+  --app-backdrop-tint: linear-gradient(180deg, #a39d95 0%, #8c8680 100%);
+  --bg-primary: #ffffff;         /* main content card */
+  --bg-secondary: #f1ede7;       /* sidebar card — warm light */
+  --bg-tertiary: #e3ddd5;        /* hover, subtle fills */
+  --bg-elevated: rgba(255, 255, 255, 0.78);   /* vibrancy panels */
   --bg-overlay: rgba(0, 0, 0, 0.28);          /* dialog scrim */
 
-  --border: rgba(0, 0, 0, 0.10);
-  --border-strong: rgba(0, 0, 0, 0.18);
+  --border: rgba(0, 0, 0, 0.12);
+  --border-strong: rgba(0, 0, 0, 0.20);
   --separator: rgba(0, 0, 0, 0.06);
 
   --text-primary: #1d1d1f;
@@ -33,10 +35,10 @@
   --muted-soft: rgba(120, 120, 128, 0.16);
 
   /* Sidebar gradient — Safari-style top sheen + bottom shade + inner edge */
-  --sidebar-base: #d6e8d2;
-  --sidebar-tint-top: rgba(255, 255, 255, 0.65);
-  --sidebar-tint-bottom: rgba(40, 90, 50, 0.10);
-  --sidebar-edge: rgba(40, 90, 50, 0.10);
+  --sidebar-base: #f1ede7;
+  --sidebar-tint-top: rgba(255, 255, 255, 0.55);
+  --sidebar-tint-bottom: rgba(0, 0, 0, 0.05);
+  --sidebar-edge: rgba(0, 0, 0, 0.06);
 
   /* Radii — macOS uses generous rounding */
   --radius-xs: 4px;
@@ -56,14 +58,16 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
+    --app-backdrop: #0d0d0e;
+    --app-backdrop-tint: linear-gradient(180deg, #131315 0%, #0a0a0b 100%);
     --bg-primary: #1e1e1e;
-    --bg-secondary: #252525;
-    --bg-tertiary: #323232;
-    --bg-elevated: rgba(40, 40, 42, 0.78);
+    --bg-secondary: #2a2a2c;
+    --bg-tertiary: #36363a;
+    --bg-elevated: rgba(40, 40, 42, 0.82);
     --bg-overlay: rgba(0, 0, 0, 0.55);
 
-    --border: rgba(255, 255, 255, 0.10);
-    --border-strong: rgba(255, 255, 255, 0.20);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.18);
     --separator: rgba(255, 255, 255, 0.06);
 
     --text-primary: #f5f5f7;
@@ -87,7 +91,7 @@
     --purple-soft: rgba(191, 90, 242, 0.18);
     --muted-soft: rgba(152, 152, 158, 0.18);
 
-    --sidebar-base: #2a332a;
+    --sidebar-base: #2a2a2c;
     --sidebar-tint-top: rgba(255, 255, 255, 0.04);
     --sidebar-tint-bottom: rgba(0, 0, 0, 0.18);
     --sidebar-edge: rgba(0, 0, 0, 0.18);
@@ -109,7 +113,8 @@ body {
                'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: var(--bg-primary);
+  background: var(--app-backdrop);
+  background-image: var(--app-backdrop-tint);
   color: var(--text-primary);
   overflow: hidden;
   height: 100vh;
@@ -119,8 +124,10 @@ body {
 
 #app {
   height: 100vh;
+  padding: 10px;
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
 
 button {

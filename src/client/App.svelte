@@ -197,15 +197,19 @@
 
 <style>
   main {
-    height: 100vh;
+    height: 100%;
     display: flex;
     flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
   }
 
   header {
     height: var(--header-height);
     background: var(--bg-secondary);
-    border-bottom: 1px solid var(--separator);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 6px 18px rgba(0, 0, 0, 0.06);
     display: flex;
     align-items: center;
     justify-content: space-between;
