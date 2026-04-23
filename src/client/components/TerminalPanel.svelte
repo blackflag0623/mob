@@ -13,6 +13,7 @@
   let unsubMessage: (() => void) | null = null;
   let resizeObserver: ResizeObserver | null = null;
   let resizeHandler: (() => void) | null = null;
+  let visibilityHandler: (() => void) | null = null;
   let inputDisposable: { dispose(): void } | null = null;
   let scrollDisposable: { dispose(): void } | null = null;
   let unsubRemove: (() => void) | null = null;
@@ -244,6 +245,19 @@
       }
     };
     window.addEventListener('resize', resizeHandler);
+
+    // When the tab becomes visible again, the xterm renderer can be left with a
+    // blank viewport (browsers throttle canvas/RAF in background tabs). Force a
+    // redraw of the active terminal's full viewport.
+    visibilityHandler = () => {
+      if (document.visibilityState !== 'visible' || !terminal) return;
+      try {
+        terminal.refresh(0, terminal.rows - 1);
+        if (fitAddon) fitAddon.fit();
+        scrollToBottomIfNeeded();
+      } catch { /* terminal may have been disposed */ }
+    };
+    document.addEventListener('visibilitychange', visibilityHandler);
   });
 
   onDestroy(() => {
@@ -252,6 +266,7 @@
     scrollDisposable?.dispose();
     resizeObserver?.disconnect();
     if (resizeHandler) window.removeEventListener('resize', resizeHandler);
+    if (visibilityHandler) document.removeEventListener('visibilitychange', visibilityHandler);
     if (currentSubscription) {
       wsClient.send({ type: 'terminal:unsubscribe', payload: { instanceId: currentSubscription } });
     }
