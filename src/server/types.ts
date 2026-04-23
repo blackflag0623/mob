@@ -28,15 +28,3 @@ export interface InstanceStatusFile {
   model?: string;
   hookEvent?: string;
 }
-
-export interface HookPayload {
-  instanceId: string;
-  cwd: string;
-  gitBranch?: string;
-  state: InstanceState;
-  ticket?: string;
-  subtask?: string;
-  progress?: number;
-  currentTool?: string;
-  sessionId?: string;
-}

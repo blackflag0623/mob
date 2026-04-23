@@ -172,9 +172,9 @@ export function createApp(instanceManager: InstanceManager, settingsManager: Set
       return;
     }
     const data = result.data;
-    log.info(`hook update: id=${data.id} state=${data.state} topic=${(data.topic as string) || '(none)'}`);
+    log.info(`hook update: id=${data.id} state=${data.state} topic=${data.topic || '(none)'}`);
     data.lastUpdated = data.lastUpdated || Date.now();
-    instanceManager.handleHookUpdate(data as any);
+    instanceManager.handleHookUpdate(data);
     res.json({ ok: true });
   });
 

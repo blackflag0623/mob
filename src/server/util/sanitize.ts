@@ -1,5 +1,6 @@
 import os from 'os';
 import path from 'path';
+import type { InstanceStatusFile } from '../types.js';
 
 // --- Shell quoting ---
 
@@ -123,7 +124,7 @@ export function validateLaunchPayload(payload: unknown): { valid: true; data: Va
   };
 }
 
-export function validateHookPayload(data: unknown): { valid: true; data: Record<string, unknown> } | { valid: false; error: string } {
+export function validateHookPayload(data: unknown): { valid: true; data: InstanceStatusFile } | { valid: false; error: string } {
   if (!data || typeof data !== 'object') {
     return { valid: false, error: 'Payload must be an object' };
   }
@@ -167,7 +168,7 @@ export function validateHookPayload(data: unknown): { valid: true; data: Record<
   if (typeof d.ticketStatus === 'string') d.ticketStatus = stripControlChars(d.ticketStatus).slice(0, 100);
   if (typeof d.hookEvent === 'string') d.hookEvent = stripControlChars(d.hookEvent).slice(0, 50);
 
-  return { valid: true, data: d };
+  return { valid: true, data: d as unknown as InstanceStatusFile };
 }
 
 export interface ValidatedEditPayload {
