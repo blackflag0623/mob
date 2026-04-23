@@ -1,5 +1,5 @@
 import { writable, derived, get } from 'svelte/store';
-import type { InstanceInfo, LaunchConflicts, FileEntry, ClientMessage } from './types.js';
+import type { InstanceInfo, LaunchConflicts, FileEntry, ClientMessage, ServerMessage } from './types.js';
 import type { Settings } from '../../shared/settings.js';
 import { DEFAULT_SETTINGS } from '../../shared/settings.js';
 import { pool } from './endpoint-pool.js';
@@ -12,7 +12,7 @@ import { requestNotificationPermission, checkWaitingNotification, clearInstanceS
 export const wsClient = {
   send(msg: ClientMessage) { pool.send(msg); },
   sendTo(endpointId: string, msg: ClientMessage) { pool.send(msg, endpointId); },
-  onMessage(handler: (msg: any) => void): () => void {
+  onMessage(handler: (msg: ServerMessage) => void): () => void {
     return pool.onMessage((msg) => handler(msg));
   },
 };
