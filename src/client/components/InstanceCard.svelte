@@ -225,19 +225,24 @@
 <style>
   .card {
     padding: 10px 12px;
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.05s;
-    background: var(--bg-primary);
-    box-shadow: var(--shadow-sm);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      0 1px 2px rgba(0, 0, 0, 0.05);
   }
 
   .card:hover {
-    border-color: var(--border-strong);
-    background: var(--bg-primary);
+    border-color: rgba(255, 255, 255, 0.40);
+    background: linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.10) 100%);
     transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.42),
+      0 4px 12px rgba(0, 0, 0, 0.10);
   }
 
   .card.selected {

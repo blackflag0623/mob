@@ -237,16 +237,25 @@ pool.onMessage((msg, endpointId) => {
   }
 });
 
-// When an endpoint disconnects, remove its instances from the map
-pool.onConnection((endpointId, connected) => {
-  if (connected) return;
-  if (!snapshotEndpoints.has(endpointId)) return;
+// When an endpoint disconnects we intentionally keep its instances in the map.
+// The endpointConnections store already reflects the disconnected state, and on
+// reconnect the snapshot handler replaces this endpoint's slice atomically.
+// Removing on disconnect caused cards to flicker out during transient WS
+// reconnects (common with remote endpoints over flaky links).
+
+// But when a user removes an endpoint from settings entirely, drop its instances.
+endpoints.subscribe((list) => {
+  const wanted = new Set(list.map((e) => e.id));
   instances.update((map) => {
+    let changed = false;
     const next = new Map(map);
-    for (const id of Array.from(next.keys())) {
-      if (next.get(id)?.endpointId === endpointId) next.delete(id);
+    for (const [id, inst] of Array.from(next.entries())) {
+      if (inst.endpointId && !wanted.has(inst.endpointId)) {
+        next.delete(id);
+        changed = true;
+      }
     }
-    return next;
+    return changed ? next : map;
   });
 });
 

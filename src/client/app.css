@@ -34,11 +34,15 @@
   --purple-soft: rgba(191, 90, 242, 0.14);
   --muted-soft: rgba(120, 120, 128, 0.16);
 
-  /* Sidebar gradient — Safari-style top sheen + bottom shade + inner edge */
-  --sidebar-base: #f1ede7;
-  --sidebar-tint-top: rgba(255, 255, 255, 0.85);
-  --sidebar-tint-bottom: rgba(60, 50, 35, 0.14);
+  /* Liquid glass — thin clear glass with bright top specular & refractive rim.
+     Low base alpha keeps the wallpaper readable through the surface. */
+  --sidebar-base: rgba(241, 237, 231, 0.32);
+  --sidebar-tint-top: rgba(255, 255, 255, 0.42);
+  --sidebar-tint-bottom: rgba(60, 50, 35, 0.06);
   --sidebar-edge: rgba(60, 50, 35, 0.10);
+  --sidebar-specular: rgba(255, 255, 255, 0.70);
+  --glass-blur: 6px;
+  --glass-rim: rgba(255, 255, 255, 0.70);
 
   /* Radii — macOS uses generous rounding */
   --radius-xs: 4px;
@@ -91,10 +95,12 @@
     --purple-soft: rgba(191, 90, 242, 0.18);
     --muted-soft: rgba(152, 152, 158, 0.18);
 
-    --sidebar-base: #2c2c2e;
+    --sidebar-base: rgba(44, 44, 46, 0.28);
     --sidebar-tint-top: rgba(255, 255, 255, 0.10);
-    --sidebar-tint-bottom: rgba(0, 0, 0, 0.35);
+    --sidebar-tint-bottom: rgba(0, 0, 0, 0.22);
     --sidebar-edge: rgba(0, 0, 0, 0.40);
+    --sidebar-specular: rgba(255, 255, 255, 0.22);
+    --glass-rim: rgba(255, 255, 255, 0.22);
 
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -120,6 +126,35 @@ body {
   height: 100vh;
   font-size: 13px;
   letter-spacing: -0.01em;
+  position: relative;
+}
+
+/* Wallpaper layer — sits behind everything when one is set. */
+html.has-wallpaper body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: var(--wallpaper-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(var(--wallpaper-blur, 0px));
+  /* Slight scale prevents blur edges from showing. */
+  transform: scale(1.04);
+  z-index: -2;
+  pointer-events: none;
+}
+html.has-wallpaper body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, var(--wallpaper-dim, 0.35));
+  z-index: -1;
+  pointer-events: none;
+}
+html.has-wallpaper body {
+  background: transparent;
+  background-image: none;
 }
 
 #app {

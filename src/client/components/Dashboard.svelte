@@ -84,6 +84,7 @@
 <style>
   .dashboard {
     flex: 1;
+    min-height: 0;
     display: flex;
     gap: 10px;
     overflow: visible;
@@ -96,10 +97,10 @@
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     background:
+      radial-gradient(70% 30% at 50% 0%, var(--sidebar-specular) 0%, transparent 70%),
       linear-gradient(180deg,
         var(--sidebar-tint-top) 0%,
-        rgba(255,255,255,0.04) 18%,
-        transparent 45%,
+        transparent 40%,
         var(--sidebar-tint-bottom) 100%),
       var(--sidebar-base);
     display: flex;
@@ -108,11 +109,12 @@
     transition: width 0.2s ease, min-width 0.2s ease;
     position: relative;
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.18),
-      0 1px 3px rgba(0, 0, 0, 0.08),
-      0 8px 24px rgba(0, 0, 0, 0.08);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    backdrop-filter: saturate(180%) blur(20px);
+      inset 0 1px 0 var(--glass-rim),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.06),
+      0 10px 30px rgba(0, 0, 0, 0.08);
+    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur));
+    backdrop-filter: saturate(180%) blur(var(--glass-blur));
   }
 
   .sidebar.collapsed {
@@ -229,14 +231,25 @@
 
   .main-area {
     flex: 1;
+    min-width: 0;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     position: relative;
-    background: var(--bg-primary);
+    background:
+      radial-gradient(70% 30% at 50% 0%, var(--sidebar-specular) 0%, transparent 70%),
+      linear-gradient(180deg, var(--sidebar-tint-top) 0%, transparent 40%, var(--sidebar-tint-bottom) 100%),
+      var(--sidebar-base);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.06);
+    box-shadow:
+      inset 0 1px 0 var(--glass-rim),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.06),
+      0 10px 30px rgba(0, 0, 0, 0.08);
+    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur));
+    backdrop-filter: saturate(180%) blur(var(--glass-blur));
   }
 
   .tab-bar {
@@ -244,11 +257,9 @@
     gap: 2px;
     padding: 6px 12px;
     border-bottom: 1px solid var(--separator);
-    background: var(--bg-secondary);
+    background: transparent;
     flex-shrink: 0;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    backdrop-filter: saturate(180%) blur(20px);
   }
 
   .tab {
@@ -273,6 +284,7 @@
 
   .tab-content {
     flex: 1;
+    min-height: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -280,6 +292,7 @@
 
   .tab-pane {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;

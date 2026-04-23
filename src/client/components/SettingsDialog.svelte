@@ -4,6 +4,7 @@
   import { endpoints, makeEndpointId, LOCAL_ENDPOINT_ID, type Endpoint } from '../lib/endpoints.js';
   import { saveSettings } from '../lib/settings-client.js';
   import { eventToShortcut, formatShortcut } from '../lib/shortcuts.js';
+  import { wallpaper, setWallpaperFromFile, clearWallpaper, updateWallpaper } from '../lib/wallpaper.js';
   import { DEFAULT_SETTINGS } from '../../shared/settings.js';
   import type { Settings } from '../../shared/settings.js';
 
@@ -124,6 +125,7 @@
     { id: 'shortcuts', label: 'Shortcuts' },
     { id: 'launch', label: 'Launch Defaults' },
     { id: 'terminal', label: 'Terminal' },
+    { id: 'appearance', label: 'Appearance' },
     { id: 'general', label: 'General' },
     { id: 'servers', label: 'Servers' },
     { id: 'jira', label: 'JIRA' },
@@ -150,6 +152,22 @@
 
   function updateEndpoint(id: string, patch: Partial<Endpoint>) {
     endpoints.update((list) => list.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+  }
+
+  // Wallpaper handlers
+  let wallpaperInput: HTMLInputElement;
+  let wallpaperError = '';
+  async function onWallpaperFile(e: Event) {
+    const input = e.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    wallpaperError = '';
+    try {
+      await setWallpaperFromFile(file);
+    } catch (err: any) {
+      wallpaperError = err?.message || 'Failed to load image';
+    }
+    input.value = '';
   }
 
 </script>
@@ -245,6 +263,37 @@
             <input id="settings-scrollback" type="number" min="100" max="100000" step="1000" bind:value={localSettings.terminal.scrollbackLines} on:input={markDirty} />
           </div>
         </div>
+
+      {:else if activeTab === 'appearance'}
+        <div class="field">
+          <label>Wallpaper</label>
+          <div class="wallpaper-row">
+            <div class="wallpaper-preview" style={$wallpaper.dataUrl ? `background-image: url('${$wallpaper.dataUrl}')` : ''}>
+              {#if !$wallpaper.dataUrl}<span class="wp-empty">No wallpaper</span>{/if}
+            </div>
+            <div class="wallpaper-controls">
+              <input type="file" accept="image/*" bind:this={wallpaperInput} on:change={onWallpaperFile} style="display:none" />
+              <button class="wp-btn" on:click={() => wallpaperInput.click()}>{$wallpaper.dataUrl ? 'Replace…' : 'Choose Image…'}</button>
+              {#if $wallpaper.dataUrl}
+                <button class="wp-btn wp-clear" on:click={clearWallpaper}>Remove</button>
+              {/if}
+            </div>
+          </div>
+          {#if wallpaperError}<p class="wp-error">{wallpaperError}</p>{/if}
+          <p class="hint">Stored locally in your browser only. Max 8 MB.</p>
+        </div>
+        {#if $wallpaper.dataUrl}
+          <div class="field">
+            <label for="wp-dim">Dim ({Math.round($wallpaper.dim * 100)}%)</label>
+            <input id="wp-dim" type="range" min="0" max="0.85" step="0.05" value={$wallpaper.dim}
+                   on:input={(e) => updateWallpaper({ dim: Number((e.currentTarget as HTMLInputElement).value) })} />
+          </div>
+          <div class="field">
+            <label for="wp-blur">Blur ({$wallpaper.blur}px)</label>
+            <input id="wp-blur" type="range" min="0" max="40" step="1" value={$wallpaper.blur}
+                   on:input={(e) => updateWallpaper({ blur: Number((e.currentTarget as HTMLInputElement).value) })} />
+          </div>
+        {/if}
 
       {:else if activeTab === 'general'}
         <div class="field">
@@ -656,5 +705,56 @@
     padding: 1px 5px;
     border-radius: 3px;
     font-size: 11px;
+  }
+
+  .wallpaper-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .wallpaper-preview {
+    width: 200px;
+    height: 110px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+    background: var(--bg-tertiary);
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .wp-empty {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .wallpaper-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .wp-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+  }
+  .wp-btn:hover { background: var(--accent-hover); }
+  .wp-btn.wp-clear {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    font-weight: 400;
+  }
+  .wp-btn.wp-clear:hover { color: var(--red); border-color: var(--red); }
+  .wp-error {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--red);
   }
 </style>

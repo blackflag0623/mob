@@ -357,11 +357,10 @@
 <style>
   .terminal-panel {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    background:
-      radial-gradient(circle at 50% 35%, rgba(0,0,0,0.025) 0%, transparent 60%),
-      var(--bg-primary);
+    background: transparent;
     overflow: hidden;
     border-radius: 0 0 var(--radius-lg) var(--radius-lg);
   }
@@ -441,6 +440,7 @@
 
   .terminal-container {
     flex: 1;
+    min-height: 0;
     padding: 4px;
     overflow: hidden;
   }

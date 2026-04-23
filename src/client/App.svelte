@@ -206,17 +206,24 @@
 
   header {
     height: var(--header-height);
-    background: var(--bg-secondary);
+    background:
+      radial-gradient(80% 36% at 50% 0%, var(--sidebar-specular) 0%, transparent 70%),
+      linear-gradient(180deg, var(--sidebar-tint-top) 0%, transparent 55%, var(--sidebar-tint-bottom) 100%),
+      var(--sidebar-base);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 6px 18px rgba(0, 0, 0, 0.06);
+    box-shadow:
+      inset 0 1px 0 var(--glass-rim),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+      0 1px 2px rgba(0, 0, 0, 0.06),
+      0 6px 18px rgba(0, 0, 0, 0.06);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 14px;
     flex-shrink: 0;
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur));
+    backdrop-filter: saturate(180%) blur(var(--glass-blur));
   }
 
   .logo {
