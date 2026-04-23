@@ -62,40 +62,54 @@
     let cached = terminalCache.get(instanceId);
     if (!cached) {
       const termSettings = get(settings).terminal;
+      const theme = {
+        background: '#1e1e1e',
+        foreground: '#f5f5f7',
+        cursor: '#0a84ff',
+        cursorAccent: '#1e1e1e',
+        selectionBackground: 'rgba(10, 132, 255, 0.35)',
+        black: '#3a3a3c',
+        red: '#ff453a',
+        green: '#32d74b',
+        yellow: '#ffd60a',
+        blue: '#0a84ff',
+        magenta: '#bf5af2',
+        cyan: '#64d2ff',
+        white: '#f5f5f7',
+        brightBlack: '#8e8e93',
+        brightRed: '#ff6961',
+        brightGreen: '#32d74b',
+        brightYellow: '#ffd60a',
+        brightBlue: '#409cff',
+        brightMagenta: '#da8fff',
+        brightCyan: '#70d7ff',
+        brightWhite: '#ffffff',
+      };
       const t = new Terminal({
         cursorBlink: false,
         fontSize: termSettings.fontSize,
         cursorStyle: termSettings.cursorStyle,
+        cursorInactiveStyle: 'none',
         fontFamily: "'JetBrains Mono', 'Fira Code', 'Cascadia Code', Menlo, monospace",
         allowProposedApi: true,
         rightClickSelectsWord: true,
-        theme: {
-          background: '#1e1e1e',
-          foreground: '#f5f5f7',
-          cursor: '#0a84ff',
-          selectionBackground: 'rgba(10, 132, 255, 0.35)',
-          black: '#3a3a3c',
-          red: '#ff453a',
-          green: '#32d74b',
-          yellow: '#ffd60a',
-          blue: '#0a84ff',
-          magenta: '#bf5af2',
-          cyan: '#64d2ff',
-          white: '#f5f5f7',
-          brightBlack: '#8e8e93',
-          brightRed: '#ff6961',
-          brightGreen: '#32d74b',
-          brightYellow: '#ffd60a',
-          brightBlue: '#409cff',
-          brightMagenta: '#da8fff',
-          brightCyan: '#70d7ff',
-          brightWhite: '#ffffff',
-        },
+        theme,
         scrollback: termSettings.scrollbackLines,
         convertEol: true,
       });
       const f = new FitAddon();
       t.loadAddon(f);
+      // Hide xterm's cursor whenever an interactive TUI (alt-screen) is active —
+      // Claude Code draws its own block cursor, and on Windows ConPTY the xterm
+      // cursor was visible underneath as a blinking blue square.
+      const applyCursorVisibility = () => {
+        const isAlt = t.buffer.active.type === 'alternate';
+        t.options.theme = isAlt
+          ? { ...theme, cursor: 'rgba(0,0,0,0)', cursorAccent: 'rgba(0,0,0,0)' }
+          : theme;
+      };
+      applyCursorVisibility();
+      t.buffer.onBufferChange(applyCursorVisibility);
       cached = { terminal: t, fitAddon: f };
       terminalCache.set(instanceId, cached);
       evictOldestTerminal();
